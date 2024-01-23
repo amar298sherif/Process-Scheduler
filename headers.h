@@ -65,3 +65,13 @@ void destroyClk(bool terminateAll)
         killpg(getpgrp(), SIGINT);
     }
 }
+struct process {
+    int pid;
+    int arrivalTime;
+    int runTime;
+    int priority;
+
+    //the rest can be used to calculate the output file stats. add more as required. 
+    int startTime;
+    int endTime;
+} typedef process;
