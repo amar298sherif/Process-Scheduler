@@ -75,3 +75,9 @@ struct process {
     int startTime;
     int endTime;
 } typedef process;
+
+enum algorithm {
+  SJF,
+  SRTF,
+  RR
+} typedef algorithm; 
