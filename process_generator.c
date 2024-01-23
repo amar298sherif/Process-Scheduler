@@ -5,9 +5,14 @@ void clearResources(int);
 void readInputFile(process plist[], int nproc, char *filepath);
 algorithm algChoice();
 void inits(algorithm alg);
+int initSchQueue();
+int sendProcess(int qid, process p);
 
 int main(int argc, char *argv[])
 {
+    int sch_qid;
+    sch_qid = initSchQueue();
+    process fakeProc = {-1,-1,-1,-1};
     signal(SIGINT, clearResources);
     // TODO Initialization
     // 1. Read the input files.
@@ -19,24 +24,39 @@ int main(int argc, char *argv[])
 
     // 3. Initiate and create the scheduler and clock processes.
     inits(userAlgChoice);
-    
+
     // 4. Use this function after creating the clock process to initialize clock
     initClk();
 
+
+
     // To get time use this
     fflush(stdout);
-    while (1){
-        //sleep(1);
+    int i = 0;
+    while (1)
+    {
+        sleep(1);
         int x = getClk();
+        
         printf("current time is %d\n", x);
+        if (procList[i].arrivalTime <= x)
+        {
+            sendProcess(sch_qid, procList[i]);
+            i++;
+        }
+        else
+        {
+            sendProcess(sch_qid, fakeProc);
+        }
+
     }
 
     // TODO Generation Main Loop
-    // 5. Create a data structure for processes and provide it with its parameters. 
-    //done
+    // 5. Create a data structure for processes and provide it with its parameters.
+    // done
 
     // 6. Send the information to the scheduler at the appropriate time.
-    //:D 
+    //: D
 
     // 7. Clear clock resources
     destroyClk(true);
@@ -63,7 +83,7 @@ void inits(algorithm alg)
         break;
     case RR:
         strcpy(params, "rr");
-        break;            
+        break;
     default:
         exit(-1);
         break;
@@ -74,20 +94,21 @@ void inits(algorithm alg)
     strcat(command, params);
 
     int pid2 = fork();
-    if (pid2 == 0){
+    if (pid2 == 0)
+    {
         execlp("x-terminal-emulator", "x-terminal-emulator", "-e", "./clk.out", (char *)NULL);
         exit(EXIT_FAILURE); // Only reached if execlp fails
     }
-    else {
+    else
+    {
         int pid1 = fork();
-        if (pid1 == 0){
+        if (pid1 == 0)
+        {
             execlp("x-terminal-emulator", "x-terminal-emulator", "-e", command, (char *)NULL);
             exit(EXIT_FAILURE); // Only reached if execlp fails
         }
-        
     }
 }
-
 
 /**
  * @brief Takes in an array of processes and fills them with their params from the input file
@@ -168,7 +189,7 @@ void readInputFile(process plist[], int nproc, char *filepath)
                 switch (j)
                 {
                 case 0:
-                    plist[index].pid = n;
+                    plist[index].id = n;
                     break;
                 case 1:
                     plist[index].arrivalTime = n;
@@ -188,7 +209,8 @@ void readInputFile(process plist[], int nproc, char *filepath)
     }
 }
 
-algorithm algChoice(){
+algorithm algChoice()
+{
     algorithm choice = -1;
     printf("Choose your alg. \n (1) -> SJF \n (2) -> SRTF \n (3) -> RR\n");
     while (choice == -1)
@@ -213,4 +235,26 @@ algorithm algChoice(){
         }
     }
     return choice;
+}
+
+int initSchQueue()
+{
+    int msgqid = msgget(GEN_TO_SCH_KEY, IPC_CREAT | 0644);
+    if (msgqid == -1)
+    {
+        perror("Error in create");
+        exit(-1);
+    }
+    return msgqid;
+}
+
+int sendProcess(int qid, process proc)
+{
+    msgbuff msg;
+    msg.mtype = getpid();
+    msg.mprocess = proc;
+    size_t send_size = msgsnd(qid, &msg, sizeof(msg.mprocess), !IPC_NOWAIT);
+    
+    if (send_size == -1)
+        perror("Error in send");
 }

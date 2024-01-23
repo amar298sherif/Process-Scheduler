@@ -17,6 +17,7 @@ typedef short bool;
 
 #define SHKEY 300
 
+#define GEN_TO_SCH_KEY 1564
 
 ///==============================
 //don't mess with this variable//
@@ -66,14 +67,10 @@ void destroyClk(bool terminateAll)
     }
 }
 struct process {
-    int pid;
+    int id;
     int arrivalTime;
     int runTime;
     int priority;
-
-    //the rest can be used to calculate the output file stats. add more as required. 
-    int startTime;
-    int endTime;
 } typedef process;
 
 enum algorithm {
@@ -81,3 +78,8 @@ enum algorithm {
   SRTF,
   RR
 } typedef algorithm; 
+
+struct msgbuff {
+  long mtype;
+  process mprocess;
+} typedef msgbuff;
