@@ -19,7 +19,7 @@ typedef short bool;
 
 #define GEN_TO_SCH_KEY 1564
 
-#define NPROC 100 //Maximum number of processes 
+#define NPROC 10 //Maximum number of processes
 
 ///==============================
 //don't mess with this variable//
