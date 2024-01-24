@@ -1,19 +1,30 @@
 #include "headers.h"
 
+#define quantum 2
 
 int initSchQueue();
+
 process getProcess(int qid);
+
 void runRoundRobin(PCB *pcb, int timeQuantum);
+
 void initializePCB(PCB pcbArray[], process p);
+
+void logState(int time, int id, const char *state, PCB *pcb);
+
+void calculatePerformance(PCB *pcbArray);
 
 int main(int argc, char * argv[])
 {
     int sch_qid;
     sch_qid = initSchQueue();
     initClk();
-
-    algo = atoi(argv[1]);           //algorithm chosen by user
-    quantum = atoi(argv[2]);        //quantum in case of RR algorithm
+    
+    //algo = atoi(argv[0]);           // algorithm 
+    /*if(argc == 1){
+        quantum = atoi(argv[1]);        //quantum in RR 
+    }*/
+    
     
     // array of PCBs, NPROC = max number of processes 
     PCB pcbArray[NPROC];
@@ -25,6 +36,7 @@ int main(int argc, char * argv[])
     
     //while loop to maks sure its synced with the proc gen. 
     fflush(stdout);
+
     while (completedProcesses < NPROC)
     {
         sleep(1);
@@ -39,7 +51,7 @@ int main(int argc, char * argv[])
         }
 
         // Run Round Robin scheduling algorithm
-        runRoundRobin(pcbArray, TIME_QUANTUM);
+        runRoundRobin(pcbArray, quantum);
 
         // Check for completed processes
         for (int i = 0; i < NPROC; i++)
@@ -50,6 +62,8 @@ int main(int argc, char * argv[])
                 completedProcesses++;
             }
         }
+        calculatePerformance(pcbArray);
+
     }
     /*while (1){
         sleep(1);
@@ -134,4 +148,41 @@ void runRoundRobin(PCB *pcbArray, int timeQuantum)
     }
 
     currentProcess = (currentProcess + 1) % NPROC;
+}
+
+void logState(int time, int id, const char *state, PCB *pcb)
+{
+    printf("\nAt time %d process %d state %s arr %d total %d remain %d wait %d",
+           time, id, state, pcb->arrivalTime, pcb->runTime, pcb->remainingTime, pcb->waitingTime);
+}
+
+void calculatePerformance(PCB *pcbArray)
+{
+    int totalTurnaroundTime = 0;
+    int totalWaitingTime = 0;
+    double totalWeightedTurnaroundTime = 0.0;
+
+    for (int i = 0; i < NPROC; i++)
+    {
+        totalTurnaroundTime += pcbArray[i].turnaroundTime;
+        totalWaitingTime += pcbArray[i].waitingTime;
+        totalWeightedTurnaroundTime += (double)pcbArray[i].turnaroundTime / pcbArray[i].runTime;
+    }
+
+    double avgWeightedTurnaroundTime = totalWeightedTurnaroundTime / NPROC;
+    double avgWaitingTime = (double)totalWaitingTime / NPROC;
+
+    double stdWeightedTurnaroundTime = 0.0;
+    for (int i = 0; i < NPROC; i++)
+    {
+        stdWeightedTurnaroundTime += pow(((double)pcbArray[i].turnaroundTime / pcbArray[i].runTime) - avgWeightedTurnaroundTime, 2);
+    }
+    stdWeightedTurnaroundTime = sqrt(stdWeightedTurnaroundTime / NPROC);
+
+    double cpuUtilization = (double)totalTurnaroundTime / getClk() * 100;
+
+    printf("\n\nCPU utilization = %.2f%%", cpuUtilization);
+    printf("\nAvg WTA = %.2f", avgWeightedTurnaroundTime);
+    printf("\nAvg Waiting = %.2f", avgWaitingTime);
+    printf("\nStd WTA = %.2f\n", stdWeightedTurnaroundTime);
 }
