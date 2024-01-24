@@ -6,9 +6,9 @@ int initSchQueue();
 
 process getProcess(int qid);
 
-void runRoundRobin(PCB *pcb, int timeQuantum);
+void runRoundRobin(struct PCBQueue* pcbQ, int timeQuantum);
 
-void initializePCB(PCB pcbArray[], process p);
+void initializePCB(struct PCBQueue* pcbQ, process p);
 
 void logState(int time, int id, const char *state, PCB *pcb);
 
@@ -26,10 +26,8 @@ int main(int argc, char * argv[])
     }*/
     
     
-    // array of PCBs, NPROC = max number of processes 
-    PCB pcbArray[NPROC];
-    // initializing PCB with zeros 
-    memset(pcbArray, 0, sizeof(pcbArray));
+    struct PCBQueue pcbQ;
+    initPCBQueue(&pcbQ);
 
     int currentTime = 0;    
     int completedProcesses = 0;
@@ -47,35 +45,14 @@ int main(int argc, char * argv[])
         if (p.arrivalTime != -1)
         {
            // PCB for the new process
-           initializePCB(pcbArray, p);
+           initializePCB(&pcbQ, p);
         }
 
         // Run Round Robin scheduling algorithm
-        runRoundRobin(pcbArray, quantum);
-
-        // Check for completed processes
-        for (int i = 0; i < NPROC; i++)
-        {
-            if (pcbArray[i].endTime == -1 && pcbArray[i].remainingTime == 0)
-            {
-                pcbArray[i].endTime = currentTime;
-                completedProcesses++;
-            }
-        }
-        calculatePerformance(pcbArray);
+        runRoundRobin(&pcbQ, quantum);
 
     }
-    /*while (1){
-        sleep(1);
-        int x = getClk();
-        process p = getProcess(sch_qid);
-        if (p.arrivalTime != -1){   
-            printf("\ncurrent scheduler time is %d\n", x);
-        }
-    }*/
-    //TODO implement the scheduler :)
-    //upon termination release the clock resources
-    
+
     destroyClk(true);
 }
 
@@ -96,13 +73,13 @@ process getProcess(int qid)
     msgrcv(qid, &msg, sizeof(msg.mprocess), 0, !IPC_NOWAIT);
     if (msg.mprocess.arrivalTime != -1)
     { //add it to the array here (?)
-        printf("\n%p \t %d \t %d \t %d \t %d", &msg, msg.mprocess.id, msg.mprocess.arrivalTime, msg.mprocess.runTime, msg.mprocess.priority);
+        //printf("\n%p \t %d \t %d \t %d \t %d", &msg, msg.mprocess.id, msg.mprocess.arrivalTime, msg.mprocess.runTime, msg.mprocess.priority);
     }
     
     return msg.mprocess;
 }
 
-void initializePCB(PCB pcbArray[], process p) {
+void initializePCB(struct PCBQueue* pcbQ, process p) {
     PCB pcb;
     pcb.id = p.id;
     pcb.arrivalTime = p.arrivalTime;
@@ -114,75 +91,49 @@ void initializePCB(PCB pcbArray[], process p) {
     pcb.waitingTime = 0;
     pcb.turnaroundTime = 0;
 
-    pcbArray[p.id] = pcb;
+    enqueuePCBQ(pcbQ, pcb);
 }
 
-void runRoundRobin(PCB *pcbArray, int timeQuantum)
+void runRoundRobin(struct PCBQueue* pcbQ, int timeQuantum)
 {
     static int currentProcess = 0;
 
     // Check if there's a process running
-    if (pcbArray[currentProcess].startTime == -1 && pcbArray[currentProcess].remainingTime > 0)
+    if (pcbQ->front != NULL && pcbQ->front->data.id == currentProcess &&
+        pcbQ->front->data.startTime == -1 && pcbQ->front->data.remainingTime > 0)
     {
-        pcbArray[currentProcess].startTime = getClk();
+        pcbQ->front->data.startTime = getClk();
     }
 
     // Run the process for the specified time quantum
-    int remainingTime = pcbArray[currentProcess].remainingTime;
-    int runTime = (remainingTime > timeQuantum) ? timeQuantum : remainingTime;
-    pcbArray[currentProcess].remainingTime -= runTime;
-
-    // Update waiting time for other processes
-    for (int i = 0; i < NPROC; i++)
+    if (pcbQ->front != NULL)
     {
-        if (i != currentProcess && pcbArray[i].startTime != -1)
+        int remainingTime = pcbQ->front->data.remainingTime;
+        int runTime = (remainingTime > timeQuantum) ? timeQuantum : remainingTime;
+        pcbQ->front->data.remainingTime -= runTime;
+
+        printf("\nArrival time %d run time%d remaining time %d wait %d",
+            pcbQ->front->data.arrivalTime,  pcbQ->front->data.runTime,  pcbQ->front->data.remainingTime,  pcbQ->front->data.waitingTime);        
+        // Update waiting time for other processes
+        struct PCBQNode* temp = pcbQ->front->next;
+        while (temp != NULL)
         {
-            pcbArray[i].waitingTime += runTime;
+            temp->data.waitingTime += runTime;
+            temp = temp->next;
+        }
+
+        // Check if the process has completed its run
+        if (pcbQ->front->data.remainingTime == 0)
+        {
+            pcbQ->front->data.turnaroundTime = getClk() - pcbQ->front->data.arrivalTime;
+            dequeuePCBQ(pcbQ);
+        }
+        else
+        {
+            // Move the process to the end of the queue
+            enqueuePCBQ(pcbQ, dequeuePCBQ(pcbQ));
         }
     }
 
-    // Check if the process has completed its run
-    if (pcbArray[currentProcess].remainingTime == 0)
-    {
-        pcbArray[currentProcess].turnaroundTime = getClk() - pcbArray[currentProcess].arrivalTime;
-    }
-
     currentProcess = (currentProcess + 1) % NPROC;
-}
-
-void logState(int time, int id, const char *state, PCB *pcb)
-{
-    printf("\nAt time %d process %d state %s arr %d total %d remain %d wait %d",
-           time, id, state, pcb->arrivalTime, pcb->runTime, pcb->remainingTime, pcb->waitingTime);
-}
-
-void calculatePerformance(PCB *pcbArray)
-{
-    int totalTurnaroundTime = 0;
-    int totalWaitingTime = 0;
-    double totalWeightedTurnaroundTime = 0.0;
-
-    for (int i = 0; i < NPROC; i++)
-    {
-        totalTurnaroundTime += pcbArray[i].turnaroundTime;
-        totalWaitingTime += pcbArray[i].waitingTime;
-        totalWeightedTurnaroundTime += (double)pcbArray[i].turnaroundTime / pcbArray[i].runTime;
-    }
-
-    double avgWeightedTurnaroundTime = totalWeightedTurnaroundTime / NPROC;
-    double avgWaitingTime = (double)totalWaitingTime / NPROC;
-
-    double stdWeightedTurnaroundTime = 0.0;
-    for (int i = 0; i < NPROC; i++)
-    {
-        stdWeightedTurnaroundTime += pow(((double)pcbArray[i].turnaroundTime / pcbArray[i].runTime) - avgWeightedTurnaroundTime, 2);
-    }
-    stdWeightedTurnaroundTime = sqrt(stdWeightedTurnaroundTime / NPROC);
-
-    double cpuUtilization = (double)totalTurnaroundTime / getClk() * 100;
-
-    printf("\n\nCPU utilization = %.2f%%", cpuUtilization);
-    printf("\nAvg WTA = %.2f", avgWeightedTurnaroundTime);
-    printf("\nAvg Waiting = %.2f", avgWaitingTime);
-    printf("\nStd WTA = %.2f\n", stdWeightedTurnaroundTime);
 }
