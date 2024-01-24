@@ -12,12 +12,15 @@ int main(int argc, char * argv[])
     sch_qid = initSchQueue();
     initClk();
 
+    algo = atoi(argv[1]);           //algorithm chosen by user
+    quantum = atoi(argv[2]);        //quantum in case of RR algorithm
+    
     // array of PCBs, NPROC = max number of processes 
     PCB pcbArray[NPROC];
     // initializing PCB with zeros 
     memset(pcbArray, 0, sizeof(pcbArray));
 
-    int currentTime = 0;
+    int currentTime = 0;    
     int completedProcesses = 0;
     
     //while loop to maks sure its synced with the proc gen. 
