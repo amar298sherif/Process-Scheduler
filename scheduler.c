@@ -8,6 +8,15 @@ int main(int argc, char * argv[])
     int sch_qid;
     sch_qid = initSchQueue();
     initClk();
+
+    // array of PCBs, NPROC = max number of processes 
+    PCB pcbArray[NPROC];
+    // initializing PCB with zeros 
+    memset(pcbArray, 0, sizeof(pcbArray));
+
+    int currentTime = 0;
+    int completedProcesses = 0;
+    
     //while loop to maks sure its synced with the proc gen. 
     fflush(stdout);
     while (1){

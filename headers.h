@@ -19,6 +19,8 @@ typedef short bool;
 
 #define GEN_TO_SCH_KEY 1564
 
+#define NPROC 30 //Maximum number of processes 
+
 ///==============================
 //don't mess with this variable//
 int * shmaddr;                 //
@@ -83,3 +85,15 @@ struct msgbuff {
   long mtype;
   process mprocess;
 } typedef msgbuff;
+
+typedef struct PCB {
+    int id;
+    int arrivalTime;
+    int runTime;
+    int priority;
+    int startTime;
+    int endTime;
+    int remainingTime;
+    int waitingTime;
+    int turnaroundTime;
+} PCB;
