@@ -96,25 +96,29 @@ void initializePCB(struct PCBQueue* pcbQ, process p) {
 
 void runRoundRobin(struct PCBQueue* pcbQ, int timeQuantum)
 {
-    static int currentProcess = 0;
-
-    // Check if there's a process running
-    if (pcbQ->front != NULL && pcbQ->front->data.id == currentProcess &&
-        pcbQ->front->data.startTime == -1 && pcbQ->front->data.remainingTime > 0)
-    {
-        pcbQ->front->data.startTime = getClk();
-    }
-
-    // Run the process for the specified time quantum
+    // Check if the queue is not empty and there's a process running
     if (pcbQ->front != NULL)
     {
-        int remainingTime = pcbQ->front->data.remainingTime;
-        int runTime = (remainingTime > timeQuantum) ? timeQuantum : remainingTime;
-        pcbQ->front->data.remainingTime -= runTime;
+        // Get the front process
+        PCB* currentProcess = &pcbQ->front->data;
 
-        printf("\nArrival time %d run time%d remaining time %d wait %d",
-            pcbQ->front->data.arrivalTime,  pcbQ->front->data.runTime,  pcbQ->front->data.remainingTime,  pcbQ->front->data.waitingTime);        
-        // Update waiting time for other processes
+        // Check if the process is just starting
+        if (currentProcess->startTime == -1 && currentProcess->remainingTime > 0)
+        {
+            currentProcess->startTime = getClk();
+        }
+
+        // Run the process for the specified time quantum
+        int remainingTime = currentProcess->remainingTime;
+        int runTime = (remainingTime > timeQuantum) ? timeQuantum : remainingTime;
+        currentProcess->remainingTime -= runTime;
+
+        // Print process information
+        printf("\nProcess %d: Arrival Time %d, Run Time %d, Remaining Time %d, Waiting Time %d",
+               currentProcess->id, currentProcess->arrivalTime, currentProcess->runTime,
+               currentProcess->remainingTime, currentProcess->waitingTime);
+
+        // Update waiting time for other processes in the queue
         struct PCBQNode* temp = pcbQ->front->next;
         while (temp != NULL)
         {
@@ -123,9 +127,9 @@ void runRoundRobin(struct PCBQueue* pcbQ, int timeQuantum)
         }
 
         // Check if the process has completed its run
-        if (pcbQ->front->data.remainingTime == 0)
+        if (currentProcess->remainingTime == 0)
         {
-            pcbQ->front->data.turnaroundTime = getClk() - pcbQ->front->data.arrivalTime;
+            currentProcess->turnaroundTime = getClk() - currentProcess->arrivalTime;
             dequeuePCBQ(pcbQ);
         }
         else
@@ -134,6 +138,4 @@ void runRoundRobin(struct PCBQueue* pcbQ, int timeQuantum)
             enqueuePCBQ(pcbQ, dequeuePCBQ(pcbQ));
         }
     }
-
-    currentProcess = (currentProcess + 1) % NPROC;
 }
