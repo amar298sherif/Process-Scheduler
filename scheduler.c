@@ -6,7 +6,7 @@ int initSchQueue();
 
 process getProcess(int qid);
 
-void runRoundRobin(struct PCBQueue* pcbQ, int timeQuantum);
+void runRoundRobin(struct PCBQueue* pcbQ, int timeQuantum, struct PCBQueue* pcbQDone);
 
 void initializePCB(struct PCBQueue* pcbQ, process p);
 
@@ -29,13 +29,16 @@ int main(int argc, char * argv[])
     struct PCBQueue pcbQ;
     initPCBQueue(&pcbQ);
 
+    struct PCBQueue pcbQDone;
+    initPCBQueue(&pcbQDone);
+
     int currentTime = 0;    
-    int completedProcesses = 0;
+    int receivedProcesses = 0;
     
     //while loop to maks sure its synced with the proc gen. 
     fflush(stdout);
 
-    while (completedProcesses < NPROC)
+    while (receivedProcesses < NPROC)
     {
         sleep(1);
         currentTime = getClk();
@@ -46,13 +49,16 @@ int main(int argc, char * argv[])
         {
            // PCB for the new process
            initializePCB(&pcbQ, p);
+           receivedProcesses++;
         }
 
         // Run Round Robin scheduling algorithm
-        runRoundRobin(&pcbQ, quantum);
+        runRoundRobin(&pcbQ, quantum, &pcbQDone);
 
     }
-
+    while(getQueueSize(&pcbQDone)<NPROC)
+    {runRoundRobin(&pcbQ, quantum, &pcbQDone);}
+    //CAlulate
     destroyClk(true);
 }
 
@@ -94,9 +100,9 @@ void initializePCB(struct PCBQueue* pcbQ, process p) {
     enqueuePCBQ(pcbQ, pcb);
 }
 
-void runRoundRobin(struct PCBQueue* pcbQ, int timeQuantum)
+void runRoundRobin(struct PCBQueue* pcbQ, int timeQuantum, struct PCBQueue* pcbQDone)
 {
-    // Check if the queue is not empty and there's a process running
+   
     if (pcbQ->front != NULL)
     {
         // Get the front process
@@ -130,7 +136,7 @@ void runRoundRobin(struct PCBQueue* pcbQ, int timeQuantum)
         if (currentProcess->remainingTime == 0)
         {
             currentProcess->turnaroundTime = getClk() - currentProcess->arrivalTime;
-            dequeuePCBQ(pcbQ);
+            enqueuePCBQ(pcbQDone, dequeuePCBQ(pcbQ));
         }
         else
         {

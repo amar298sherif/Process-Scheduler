@@ -138,7 +138,17 @@ void enqueuePCBQ(struct PCBQueue* queue, PCB data) {
     queue->rear->next = newNode;
     queue->rear = newNode;
 }
+int getQueueSize(struct PCBQueue* queue) {
+    int size = 0;
+    struct PCBQNode* current = queue->front;
 
+    while (current != NULL) {
+        size++;
+        current = current->next;
+    }
+
+    return size;
+}
 // Function to dequeue a process from the queue
 PCB dequeuePCBQ(struct PCBQueue* queue) {
     // If the queue is empty, return an "empty" process (you may define an empty process)
