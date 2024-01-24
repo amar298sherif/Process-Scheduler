@@ -1,7 +1,10 @@
 #include "headers.h"
 
+
 int initSchQueue();
 process getProcess(int qid);
+void runRoundRobin(PCB *pcb, int timeQuantum);
+void initializePCB(PCB pcbArray[], process p);
 
 int main(int argc, char * argv[])
 {
@@ -19,14 +22,40 @@ int main(int argc, char * argv[])
     
     //while loop to maks sure its synced with the proc gen. 
     fflush(stdout);
-    while (1){
+    while (completedProcesses < NPROC)
+    {
+        sleep(1);
+        currentTime = getClk();
+
+        // check for arriving processes
+        process p = getProcess(sch_qid);
+        if (p.arrivalTime != -1)
+        {
+           // PCB for the new process
+           initializePCB(pcbArray, p);
+        }
+
+        // Run Round Robin scheduling algorithm
+        runRoundRobin(pcbArray, TIME_QUANTUM);
+
+        // Check for completed processes
+        for (int i = 0; i < NPROC; i++)
+        {
+            if (pcbArray[i].endTime == -1 && pcbArray[i].remainingTime == 0)
+            {
+                pcbArray[i].endTime = currentTime;
+                completedProcesses++;
+            }
+        }
+    }
+    /*while (1){
         sleep(1);
         int x = getClk();
         process p = getProcess(sch_qid);
         if (p.arrivalTime != -1){   
             printf("\ncurrent scheduler time is %d\n", x);
         }
-    }
+    }*/
     //TODO implement the scheduler :)
     //upon termination release the clock resources
     
@@ -54,4 +83,52 @@ process getProcess(int qid)
     }
     
     return msg.mprocess;
+}
+
+void initializePCB(PCB pcbArray[], process p) {
+    PCB pcb;
+    pcb.id = p.id;
+    pcb.arrivalTime = p.arrivalTime;
+    pcb.runTime = p.runTime;
+    pcb.priority = p.priority;
+    pcb.startTime = -1;
+    pcb.endTime = -1;
+    pcb.remainingTime = p.runTime;
+    pcb.waitingTime = 0;
+    pcb.turnaroundTime = 0;
+
+    pcbArray[p.id] = pcb;
+}
+
+void runRoundRobin(PCB *pcbArray, int timeQuantum)
+{
+    static int currentProcess = 0;
+
+    // Check if there's a process running
+    if (pcbArray[currentProcess].startTime == -1 && pcbArray[currentProcess].remainingTime > 0)
+    {
+        pcbArray[currentProcess].startTime = getClk();
+    }
+
+    // Run the process for the specified time quantum
+    int remainingTime = pcbArray[currentProcess].remainingTime;
+    int runTime = (remainingTime > timeQuantum) ? timeQuantum : remainingTime;
+    pcbArray[currentProcess].remainingTime -= runTime;
+
+    // Update waiting time for other processes
+    for (int i = 0; i < NPROC; i++)
+    {
+        if (i != currentProcess && pcbArray[i].startTime != -1)
+        {
+            pcbArray[i].waitingTime += runTime;
+        }
+    }
+
+    // Check if the process has completed its run
+    if (pcbArray[currentProcess].remainingTime == 0)
+    {
+        pcbArray[currentProcess].turnaroundTime = getClk() - pcbArray[currentProcess].arrivalTime;
+    }
+
+    currentProcess = (currentProcess + 1) % NPROC;
 }

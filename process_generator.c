@@ -1,6 +1,5 @@
 #include "headers.h"
 #include <string.h>
-#define NPROC 10
 void clearResources(int);
 void readInputFile(process plist[], int nproc, char *filepath);
 algorithm algChoice();
