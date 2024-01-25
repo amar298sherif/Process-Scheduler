@@ -28,24 +28,21 @@ int main(int argc, char * argv[])
     int sch_qid;
     sch_qid = initSchQueue();
     initClk();
-    
-    //algo = atoi(argv[0]);           // algorithm 
-    /*if(argc == 1){
-        quantum = atoi(argv[1]);        //quantum in RR 
-    }*/
-    readyQ = createQueue();
+    printf("started");
 
+   
     int currentTime = 0;    
-    //int completedProcesses = 0;
     
     //while loop to maks sure its synced with the proc gen. 
-    fflush(stdout);
+    //fflush(stdout);
+    printf("here");
 
-    while (1)
+    /*while(1)
     {
+        printf("enter");
         sleep(1);
         currentTime = getClk();
-
+        printf("%d",currentTime);
         // check for arriving processes
         process p = getProcess(sch_qid);
         if (p.arrivalTime != -1)
@@ -61,7 +58,7 @@ int main(int argc, char * argv[])
         runRoundRobin();
 
     }
-
+*/
     destroyClk(true);
 }
 
@@ -88,11 +85,12 @@ void alarmHandler(int signum) //used with RR to wakeup after (time = quantum) ha
     // run again
     runRoundRobin();
 }
-
-void stopPrcs()
-{
-    enqueue(readyQ, currentProcess->data);
-    currentProcess = NULL;
+void stopPrcs() {
+    if (currentProcess != NULL && currentProcess->data != NULL) {
+        enqueue(readyQ, currentProcess->data);
+        free(currentProcess->data); // Free the PCB
+        currentProcess->data = NULL;
+    }
 }
 
 process getProcess(int qid)
@@ -157,28 +155,24 @@ int forkPrcs(int executionTime)
 }
 
 
-void runRoundRobin()
-{
+void runRoundRobin() {
     // Check if the queue is not empty and there's a process running
-    if ( currentProcess == NULL)
-    {
+    if (currentProcess == NULL || currentProcess->data == NULL) {
         // Get the front process
-         if (!isEmpty(readyQ)) {
+        if (!isEmpty(readyQ)) {
             currentProcess->data = dequeue(readyQ);
 
             // Check if the process is just starting
-            if (currentProcess->data->startTime == -1 && currentProcess->data->remainingTime > 0)
-            {
+            if (currentProcess->data->startTime == -1 && currentProcess->data->remainingTime > 0) {
                 currentProcess->data->startTime = getClk();
                 currentProcess->data->pid = forkPrcs(currentProcess->data->runTime);
                 // write started
-            }
-            else //process has run before
+            } else // process has run before
             {
                 kill(currentProcess->data->pid, SIGCONT);
                 // write resumed
             }
-         }
+        }
     }
     alarm(quantum);
 }

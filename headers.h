@@ -98,6 +98,98 @@ typedef struct PCB {
     int waitingTime;
     int turnaroundTime;
 } PCB;
+#include <stdio.h>
+#include <stdlib.h>
+
+// Define the Node structure for the queue
+typedef struct Node {
+    PCB* data;
+    struct Node* next;
+} Node;
+
+// Define the readyQueue structure
+typedef struct {
+    Node* front;
+    Node* rear;
+} readyQueue;
+
+// Function to initialize an empty queue
+readyQueue* createQueue() {
+    readyQueue* queue = (readyQueue*)malloc(sizeof(readyQueue));
+    if (queue == NULL) {
+        fprintf(stderr, "Memory allocation error\n");
+        exit(EXIT_FAILURE);
+    }
+    queue->front = queue->rear = NULL;
+    return queue;
+}
+
+// Function to check if the queue is empty
+int isEmpty(readyQueue* queue) {
+    return (queue->front == NULL);
+}
+
+// Function to enqueue a PCB pointer
+void enqueue(readyQueue* queue, PCB* pcb) {
+    Node* newNode = (Node*)malloc(sizeof(Node));
+    if (newNode == NULL) {
+        fprintf(stderr, "Memory allocation error\n");
+        exit(EXIT_FAILURE);
+    }
+
+    newNode->data = pcb;
+    newNode->next = NULL;
+
+    if (isEmpty(queue)) {
+        queue->front = queue->rear = newNode;
+    } else {
+        queue->rear->next = newNode;
+        queue->rear = newNode;
+    }
+}
+
+// Function to dequeue a PCB pointer
+PCB* dequeue(readyQueue* queue) {
+    if (isEmpty(queue)) {
+        fprintf(stderr, "readyQueue is empty\n");
+        exit(EXIT_FAILURE);
+    }
+
+    Node* frontNode = queue->front;
+    PCB* pcb = frontNode->data;
+
+    queue->front = frontNode->next;
+
+    // If the queue becomes empty after dequeue
+    if (queue->front == NULL) {
+        queue->rear = NULL;
+    }
+
+    free(frontNode);
+
+    return pcb;
+}
+int getSize(readyQueue* queue) {
+    int size = 0;
+    Node* current = queue->front;
+
+    while (current != NULL) {
+        size++;
+        current = current->next;
+    }
+
+    return size;
+}
+// Function to free the memory used by the queue
+void freeQueue(readyQueue* queue) {
+    while (!isEmpty(queue)) {
+        dequeue(queue);
+    }
+    free(queue);
+}
+
+
+/*
 
 // Node for the queue
 typedef struct Node {
@@ -119,6 +211,7 @@ readyQueue* createQueue() {
         exit(EXIT_FAILURE);
     }
     queue->front = queue->rear = NULL;
+    printf("created");
     return queue;
 }
 
@@ -189,7 +282,7 @@ void freeQueue(readyQueue* queue) {
 
     free(queue); // Free the readyQueue struct
 }
-
+*/
 /*
 // readyQueue Implementation 
 // Define a structure for a queue node
