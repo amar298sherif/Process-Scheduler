@@ -107,16 +107,16 @@ struct PCBQNode {
     struct PCBQNode* next;
 };
 // Define a structure for the queue
-struct PCBQueue {
+struct readyQueue {
     struct PCBQNode* front;  // Front of the queue
     struct PCBQNode* rear;   // Rear of the queue
 };
 // Function to initialize a new empty queue
-void initPCBQueue(struct PCBQueue* queue) {
+void initReadyQ(struct readyQueue* queue) {
     queue->front = queue->rear = NULL;
 }
 // Function to enqueue a process in the queue
-void enqueuePCBQ(struct PCBQueue* queue, PCB data) {
+void enqueueReadyQ(struct readyQueue* queue, PCB data) {
     // Create a new node
     struct PCBQNode* newNode = (struct PCBQNode*)malloc(sizeof(struct PCBQNode));
     if (newNode == NULL) {
@@ -139,9 +139,19 @@ void enqueuePCBQ(struct PCBQueue* queue, PCB data) {
     queue->rear->next = newNode;
     queue->rear = newNode;
 }
+int getQueueSize(struct readyQueue* queue) {
+    int size = 0;
+    struct PCBQNode* current = queue->front;
 
+    while (current != NULL) {
+        size++;
+        current = current->next;
+    }
+
+    return size;
+}
 // Function to dequeue a process from the queue
-PCB* dequeuePCBQ(struct PCBQueue* queue) {
+PCB* dequeueReadyQ(struct readyQueue* queue) {
     // If the queue is empty, return an "empty" process (you may define an empty process)
     if (queue->front == NULL) {
         PCB emptyProcess = {-1, -1, -1, -1};
