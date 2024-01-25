@@ -99,18 +99,109 @@ typedef struct PCB {
     int turnaroundTime;
 } PCB;
 
+// Node for the queue
+typedef struct Node {
+    PCB* data;
+    struct Node* next;
+} Node;
 
-// RR Queue Implementation 
+// readyQueue struct
+typedef struct readyQueue {
+    Node* front;
+    Node* rear;
+} readyQueue;
+
+// Function to initialize an empty queue
+readyQueue* createQueue() {
+    readyQueue* queue = (readyQueue*)malloc(sizeof(readyQueue));
+    if (queue == NULL) {
+        fprintf(stderr, "Memory allocation error\n");
+        exit(EXIT_FAILURE);
+    }
+    queue->front = queue->rear = NULL;
+    return queue;
+}
+
+// Function to check if the queue is empty
+int isEmpty(readyQueue* queue) {
+    return (queue->front == NULL);
+}
+
+// Function to enqueue a PCB pointer
+void enqueue(readyQueue* queue, PCB* data) {
+    Node* newNode = (Node*)malloc(sizeof(Node));
+    if (newNode == NULL) {
+        fprintf(stderr, "Memory allocation error\n");
+        exit(EXIT_FAILURE);
+    }
+    newNode->data = data;
+    newNode->next = NULL;
+
+    if (queue->rear == NULL) {
+        queue->front = queue->rear = newNode;
+        return;
+    }
+
+    queue->rear->next = newNode;
+    queue->rear = newNode;
+}
+
+// Function to dequeue a PCB pointer
+PCB* dequeue(readyQueue* queue) {
+    if (isEmpty(queue)) {
+        fprintf(stderr, "readyQueue is empty\n");
+        exit(EXIT_FAILURE);
+    }
+
+    Node* temp = queue->front;
+    PCB* data = temp->data;
+    queue->front = temp->next;
+
+    if (queue->front == NULL) {
+        queue->rear = NULL;
+    }
+
+    free(temp);
+    return data;
+}
+
+// Function to get the size of the queue
+int getSize(readyQueue* queue) {
+    int size = 0;
+    Node* current = queue->front;
+
+    while (current != NULL) {
+        size++;
+        current = current->next;
+    }
+
+    return size;
+}
+
+// Function to free the memory occupied by the queue and its elements
+void freeQueue(readyQueue* queue) {
+    while (!isEmpty(queue)) {
+        Node* temp = queue->front;
+        queue->front = temp->next;
+        free(temp->data); // Free the PCB
+        free(temp);       // Free the Node
+    }
+
+    free(queue); // Free the readyQueue struct
+}
+
+/*
+// readyQueue Implementation 
 // Define a structure for a queue node
-struct PCBQNode {
+typedef struct PCBQNode {
     PCB data;
     struct PCBQNode* next;
-};
+} PCBQNode;
 // Define a structure for the queue
-struct readyQueue {
+typedef struct readyQueue {
     struct PCBQNode* front;  // Front of the queue
     struct PCBQNode* rear;   // Rear of the queue
-};
+} readyQueue;
 // Function to initialize a new empty queue
 void initReadyQ(struct readyQueue* queue) {
     queue->front = queue->rear = NULL;
@@ -151,11 +242,11 @@ int getQueueSize(struct readyQueue* queue) {
     return size;
 }
 // Function to dequeue a process from the queue
-PCB* dequeueReadyQ(struct readyQueue* queue) {
+struct PCBQNode* dequeueReadyQ(struct readyQueue* queue) {
     // If the queue is empty, return an "empty" process (you may define an empty process)
     if (queue->front == NULL) {
-        PCB emptyProcess = {-1, -1, -1, -1};
-        return emptyProcess;
+
+        return NULL;
     }
 
     // Otherwise, dequeue the front node and update front
@@ -173,3 +264,4 @@ PCB* dequeueReadyQ(struct readyQueue* queue) {
 
     return temp;
 }
+*/

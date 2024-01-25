@@ -14,9 +14,20 @@ void logState(int time, int id, const char *state, PCB *pcb);
 
 void calculatePerformance(PCB *pcbArray);
 
-PCBQNode* currentProcess;
+ 
+int forkPrcs(int time);
 
-readyQueue readyQ;
+void stopPrcs();
+
+readyQueue* readyQ;
+Node* currentProcess = (Node*)malloc(sizeof(Node));
+if (currentProcess == NULL) {
+    fprintf(stderr, "Memory allocation error\n");
+    exit(EXIT_FAILURE);
+}
+currentProcess->data = NULL;
+currentProcess->next = NULL;
+
 
 int main(int argc, char * argv[])
 {
@@ -28,18 +39,15 @@ int main(int argc, char * argv[])
     /*if(argc == 1){
         quantum = atoi(argv[1]);        //quantum in RR 
     }*/
-    
-    
-    //struct readyQueue readyQ;
-    initReadyQ(&readyQ);
+    readyQ = createQueue();
 
     int currentTime = 0;    
-    int completedProcesses = 0;
+    //int completedProcesses = 0;
     
     //while loop to maks sure its synced with the proc gen. 
     fflush(stdout);
 
-    while (completedProcesses < NPROC)
+    while (1)
     {
         sleep(1);
         currentTime = getClk();
@@ -50,13 +58,13 @@ int main(int argc, char * argv[])
         {
            // PCB for the new process
 
-           int pid = forkPrcs();
+           int pid = forkPrcs(p.runTime);
 
            initializePCB(p, pid);
         }
 
         // Run Round Robin scheduling algorithm
-        runRoundRobin(&readyQ, quantum);
+        runRoundRobin();
 
     }
 
@@ -78,10 +86,10 @@ void alarmHandler(int signum) //used with RR to wakeup after (time = quantum) ha
 {
      //CHECK so that recieved signals at this time step are placed before the one has just stopped
     
-    currentProcess->remainingTime -= quantum; //decrement remaining time by quantum
+    currentProcess->data->remainingTime -= quantum; //decrement remaining time by quantum
     
-    if(currentProcess->remainingTime > 0)
-        if(getQueueSize(&readyQueue) > 0)   //do not stop if it is the only one in Q  
+    if(currentProcess->data->remainingTime > 0)
+        if(getSize(readyQ) > 0)   //do not stop if it is the only one in Q  
             stopPrcs();//
     // run again
     runRoundRobin();
@@ -89,7 +97,7 @@ void alarmHandler(int signum) //used with RR to wakeup after (time = quantum) ha
 
 void stopPrcs()
 {
-    enqueueReadyQ(currentProcess);
+    enqueue(readyQ, currentProcess->data);
     currentProcess = NULL;
 }
 
@@ -105,20 +113,26 @@ process getProcess(int qid)
 }
 
 void initializePCB(process p, int pid) {
-    PCB pcb;
-    pcb.id = p.id;
-    pcb.pid = pid;
-    pcb.arrivalTime = p.arrivalTime;
-    pcb.runTime = p.runTime;
-    pcb.priority = p.priority;
-    pcb.startTime = -1;
-    pcb.endTime = -1;
-    pcb.remainingTime = p.runTime;
-    pcb.waitingTime = 0;
-    pcb.turnaroundTime = 0;
+    PCB *pcb = (PCB*)malloc(sizeof(PCB));
+    if (pcb == NULL) {
+        fprintf(stderr, "Memory allocation error\n");
+        exit(EXIT_FAILURE);
+    }
 
-    enqueuereadyQ(readyQ, pcb);
+    pcb->id = p.id;
+    pcb->pid = pid;
+    pcb->arrivalTime = p.arrivalTime;
+    pcb->runTime = p.runTime;
+    pcb->priority = p.priority;
+    pcb->startTime = -1;
+    pcb->endTime = -1;
+    pcb->remainingTime = p.runTime;
+    pcb->waitingTime = 0;
+    pcb->turnaroundTime = 0;
+
+    enqueue(readyQ, pcb);
 }
+
 
 int forkPrcs(int executionTime)
 {
@@ -155,18 +169,18 @@ void runRoundRobin()
     if ( currentProcess == NULL)
     {
         // Get the front process
-        currentProcess = dequeueReadyQ(&readyQ)
+        currentProcess->data = dequeue(readyQ);
 
         // Check if the process is just starting
-        if (currentProcess->startTime == -1 && currentProcess->remainingTime > 0)
+        if (currentProcess->data->startTime == -1 && currentProcess->data->remainingTime > 0)
         {
-            currentProcess->startTime = getClk();
-            currentProcess->pid = forkPrcs(currentProcess->runTime);
+            currentProcess->data->startTime = getClk();
+            currentProcess->data->pid = forkPrcs(currentProcess->data->runTime);
             // write started
         }
         else //process has run before
         {
-            kill(currentProcess->pid, SIGCONT);
+            kill(currentProcess->data->pid, SIGCONT);
             // write resumed
         }
     }
