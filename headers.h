@@ -88,6 +88,7 @@ struct msgbuff {
 
 typedef struct PCB {
     int id;
+    pid_t pid;
     int arrivalTime;
     int runTime;
     int priority;
@@ -99,76 +100,82 @@ typedef struct PCB {
 } PCB;
 
 
-// RR Queue Implementation 
-// Define a structure for a queue node
-struct PCBQNode {
-    PCB data;
-    struct PCBQNode* next;
+
+// Node structure for the linked list
+struct Node {
+    int data;
+    struct Node* next;
 };
-// Define a structure for the queue
-struct PCBQueue {
-    struct PCBQNode* front;  // Front of the queue
-    struct PCBQNode* rear;   // Rear of the queue
+
+// readyQueue structure
+struct readyQueue {
+    struct Node* front;
+    struct Node* rear;
 };
-// Function to initialize a new empty queue
-void initPCBQueue(struct PCBQueue* queue) {
-    queue->front = queue->rear = NULL;
-}
-// Function to enqueue a process in the queue
-void enqueuePCBQ(struct PCBQueue* queue, PCB data) {
-    // Create a new node
-    struct PCBQNode* newNode = (struct PCBQNode*)malloc(sizeof(struct PCBQNode));
+
+// Function to create a new node with given data
+struct Node* createNode(int data) {
+    struct Node* newNode = (struct Node*)malloc(sizeof(struct Node));
     if (newNode == NULL) {
-        // Handle memory allocation failure
-        perror("Error in enqueue: Memory allocation failed");
+        perror("Memory allocation error");
+        exit(EXIT_FAILURE);
+    }
+    newNode->data = data;
+    newNode->next = NULL;
+    return newNode;
+}
+
+// Function to initialize an empty queue
+struct readyQueue* createQueue() {
+    struct readyQueue* queue = (struct readyQueue*)malloc(sizeof(struct readyQueue));
+    if (queue == NULL) {
+        perror("Memory allocation error");
+        exit(EXIT_FAILURE);
+    }
+    queue->front = queue->rear = NULL;
+    return queue;
+}
+
+// Function to check if the queue is empty
+int isEmpty(struct readyQueue* queue) {
+    return (queue->front == NULL);
+}
+
+// Function to enqueue an element into the queue
+void enqueue(struct readyQueue* queue, int data) {
+    struct Node* newNode = createNode(data);
+    if (isEmpty(queue)) {
+        queue->front = queue->rear = newNode;
+    } else {
+        queue->rear->next = newNode;
+        queue->rear = newNode;
+    }
+}
+
+// Function to dequeue an element from the queue
+int dequeue(struct readyQueue* queue) {
+    if (isEmpty(queue)) {
+        fprintf(stderr, "Error: readyQueue is empty\n");
         exit(EXIT_FAILURE);
     }
 
-    // Set data and next pointer
-    newNode->data = data;
-    newNode->next = NULL;
+    struct Node* temp = queue->front;
+    int data = temp->data;
 
-    // If the queue is empty, set the new node as both front and rear
-    if (queue->rear == NULL) {
-        queue->front = queue->rear = newNode;
-        return;
+    if (queue->front == queue->rear) {
+        queue->front = queue->rear = NULL;
+    } else {
+        queue->front = queue->front->next;
     }
 
-    // Otherwise, add the new node at the end and update rear
-    queue->rear->next = newNode;
-    queue->rear = newNode;
-}
-int getQueueSize(struct PCBQueue* queue) {
-    int size = 0;
-    struct PCBQNode* current = queue->front;
-
-    while (current != NULL) {
-        size++;
-        current = current->next;
-    }
-
-    return size;
-}
-// Function to dequeue a process from the queue
-PCB dequeuePCBQ(struct PCBQueue* queue) {
-    // If the queue is empty, return an "empty" process (you may define an empty process)
-    if (queue->front == NULL) {
-        PCB emptyProcess = {-1, -1, -1, -1};
-        return emptyProcess;
-    }
-
-    // Otherwise, dequeue the front node and update front
-    struct PCBQNode* temp = queue->front;
-    PCB data = temp->data;
-
-    queue->front = temp->next;
-
-    // If front becomes NULL, update rear as well
-    if (queue->front == NULL) {
-        queue->rear = NULL;
-    }
-
-    free(temp);  // Free the dequeued node
-
+    free(temp);
     return data;
+}
+
+// Function to free the memory allocated for the queue
+void freeQueue(struct readyQueue* queue) {
+    while (!isEmpty(queue)) {
+        dequeue(queue);
+    }
+    free(queue);
 }

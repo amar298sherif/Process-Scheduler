@@ -11,11 +11,14 @@ int main(int agrc, char * argv[])
     int schdClk = atoi(argv[3]);
     //TODO it needs to get the remaining time from somewhere
     //remainingtime = ??;
+    
     while (remainingtime > 0)
     {
-        printf("\nProcess with pid %d started remaining time is %d", getpid(), remainingTime);
+        remainingTime--;
+        pause();
     }
     
+    kill(schdPid, SIGUSR2);
     destroyClk(false);
     
     return 0;
