@@ -88,6 +88,7 @@ struct msgbuff {
 
 typedef struct PCB {
     int id;
+    pid_t pid;
     int arrivalTime;
     int runTime;
     int priority;
@@ -140,7 +141,7 @@ void enqueuePCBQ(struct PCBQueue* queue, PCB data) {
 }
 
 // Function to dequeue a process from the queue
-PCB dequeuePCBQ(struct PCBQueue* queue) {
+PCB* dequeuePCBQ(struct PCBQueue* queue) {
     // If the queue is empty, return an "empty" process (you may define an empty process)
     if (queue->front == NULL) {
         PCB emptyProcess = {-1, -1, -1, -1};
@@ -149,7 +150,7 @@ PCB dequeuePCBQ(struct PCBQueue* queue) {
 
     // Otherwise, dequeue the front node and update front
     struct PCBQNode* temp = queue->front;
-    PCB data = temp->data;
+    //PCB data = temp->data;
 
     queue->front = temp->next;
 
@@ -160,5 +161,5 @@ PCB dequeuePCBQ(struct PCBQueue* queue) {
 
     free(temp);  // Free the dequeued node
 
-    return data;
+    return temp;
 }

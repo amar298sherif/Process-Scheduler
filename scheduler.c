@@ -6,9 +6,9 @@ int initSchQueue();
 
 process getProcess(int qid);
 
-void runRoundRobin(struct PCBQueue* pcbQ, int timeQuantum);
+void runRoundRobin(struct readyQueue* readyQ, int timeQuantum);
 
-void initializePCB(struct PCBQueue* pcbQ, process p);
+void initializePCB(struct readyQueue* readyQ, process p, int pid);
 
 void logState(int time, int id, const char *state, PCB *pcb);
 
@@ -26,8 +26,8 @@ int main(int argc, char * argv[])
     }*/
     
     
-    struct PCBQueue pcbQ;
-    initPCBQueue(&pcbQ);
+    struct readyQueue readyQ;
+    initreadyQueue(&readyQ);
 
     int currentTime = 0;    
     int completedProcesses = 0;
@@ -45,11 +45,14 @@ int main(int argc, char * argv[])
         if (p.arrivalTime != -1)
         {
            // PCB for the new process
-           initializePCB(&pcbQ, p);
+
+           int pid = forkPrcs();
+
+           initializePCB(&readyQ, p, pid);
         }
 
         // Run Round Robin scheduling algorithm
-        runRoundRobin(&pcbQ, quantum);
+        runRoundRobin(&readyQ, quantum);
 
     }
 
@@ -67,6 +70,18 @@ int initSchQueue()
     return msgqid;
 }
 
+void alarmHandler(int signum) //used with RR to wakeup after (time = quantum) has passed
+{
+    checkRcv(); //so that recieved signals at this time step are placed before the one has just stopped
+    
+    runningP->remainingTime -= quantum; //decrement remaining time by quantum
+    
+    if(runningP->remainingTime > 0)
+        if(qSize > 0)   //do not stop if it is the only one in Q  
+            stopPrcs();
+    runAlgo();
+
+}
 process getProcess(int qid)
 {
     msgbuff msg;
@@ -79,9 +94,10 @@ process getProcess(int qid)
     return msg.mprocess;
 }
 
-void initializePCB(struct PCBQueue* pcbQ, process p) {
+void initializePCB(struct readyQueue* readyQ, process p, int pid) {
     PCB pcb;
     pcb.id = p.id;
+    pcb.pid = pid;
     pcb.arrivalTime = p.arrivalTime;
     pcb.runTime = p.runTime;
     pcb.priority = p.priority;
@@ -91,51 +107,79 @@ void initializePCB(struct PCBQueue* pcbQ, process p) {
     pcb.waitingTime = 0;
     pcb.turnaroundTime = 0;
 
-    enqueuePCBQ(pcbQ, pcb);
+    enqueuereadyQ(readyQ, pcb);
 }
 
-void runRoundRobin(struct PCBQueue* pcbQ, int timeQuantum)
+int forkPrcs(int executionTime)
+{
+    pid_t schdPid = getpid();
+    pid_t prcsPid = fork();
+
+    if(prcsPid == -1) //error happened when forking
+    {
+        perror("Error forking process");
+        exit(EXIT_FAILURE);
+    }
+    else if(prcsPid == 0) //execv'ing to process
+    {
+        char sExecutionTime[5] = {0};
+        char sPid[7] = {0};
+        char sClk[7] = {0};
+        sprintf(sPid, "%d", schdPid);
+        sprintf(sExecutionTime, "%d", executionTime);
+        sprintf(sClk, "%d", getClk());
+        char *const paramList[] = {"./process.out", sExecutionTime, sPid, sClk,NULL};
+        execv("./process.out", paramList);
+        
+        //if it executes what is under this line, then execv has failed
+        perror("Error in execv'ing to clock");
+        exit(EXIT_FAILURE);
+    }
+    return prcsPid;
+}
+void runRR()
+{
+    signal(SIGUSR1, handleUser1); //activating signal sent by process generator on recieving
+
+    if(runningP == NULL)
+    {
+        runningP = dequeue();
+        if(runningP == NULL)
+            return;
+
+        if(runningP->startTime==-1) //process running for the first time
+        {
+            runningP->startTime= getClk();
+            runningP->processId =  forkPrcs(runningP->executionTime);
+            writeSchedulerLog(runningP, getClk(), "started");
+        }
+        else //process has run before
+        {
+            kill(runningP->processId, SIGCONT);
+            writeSchedulerLog(runningP, getClk(), "resumed");
+        }
+        runningP->recentStart = getClk();
+    }
+}
+void runRoundRobin(struct readyQueue* readyQ, int timeQuantum)
 {
     // Check if the queue is not empty and there's a process running
-    if (pcbQ->front != NULL)
+    if (readyQ->front != NULL)
     {
         // Get the front process
-        PCB* currentProcess = &pcbQ->front->data;
+        PCB* currentProcess = dequeuePCBQ(&readyQ)
 
         // Check if the process is just starting
         if (currentProcess->startTime == -1 && currentProcess->remainingTime > 0)
         {
             currentProcess->startTime = getClk();
+            currentProcess->pid = forkPrcs(currentProcess->runTime);
+            // write started
         }
-
-        // Run the process for the specified time quantum
-        int remainingTime = currentProcess->remainingTime;
-        int runTime = (remainingTime > timeQuantum) ? timeQuantum : remainingTime;
-        currentProcess->remainingTime -= runTime;
-
-        // Print process information
-        printf("\nProcess %d: Arrival Time %d, Run Time %d, Remaining Time %d, Waiting Time %d",
-               currentProcess->id, currentProcess->arrivalTime, currentProcess->runTime,
-               currentProcess->remainingTime, currentProcess->waitingTime);
-
-        // Update waiting time for other processes in the queue
-        struct PCBQNode* temp = pcbQ->front->next;
-        while (temp != NULL)
+        else //process has run before
         {
-            temp->data.waitingTime += runTime;
-            temp = temp->next;
-        }
-
-        // Check if the process has completed its run
-        if (currentProcess->remainingTime == 0)
-        {
-            currentProcess->turnaroundTime = getClk() - currentProcess->arrivalTime;
-            dequeuePCBQ(pcbQ);
-        }
-        else
-        {
-            // Move the process to the end of the queue
-            enqueuePCBQ(pcbQ, dequeuePCBQ(pcbQ));
+            kill(currentProcess->pid, SIGCONT);
+            // write resumed
         }
     }
 }
