@@ -20,13 +20,7 @@ int forkPrcs(int time);
 void stopPrcs();
 
 readyQueue* readyQ;
-Node* currentProcess = (Node*)malloc(sizeof(Node));
-if (currentProcess == NULL) {
-    fprintf(stderr, "Memory allocation error\n");
-    exit(EXIT_FAILURE);
-}
-currentProcess->data = NULL;
-currentProcess->next = NULL;
+Node* currentProcess = NULL;
 
 
 int main(int argc, char * argv[])
@@ -169,20 +163,22 @@ void runRoundRobin()
     if ( currentProcess == NULL)
     {
         // Get the front process
-        currentProcess->data = dequeue(readyQ);
+         if (!isEmpty(readyQ)) {
+            currentProcess->data = dequeue(readyQ);
 
-        // Check if the process is just starting
-        if (currentProcess->data->startTime == -1 && currentProcess->data->remainingTime > 0)
-        {
-            currentProcess->data->startTime = getClk();
-            currentProcess->data->pid = forkPrcs(currentProcess->data->runTime);
-            // write started
-        }
-        else //process has run before
-        {
-            kill(currentProcess->data->pid, SIGCONT);
-            // write resumed
-        }
+            // Check if the process is just starting
+            if (currentProcess->data->startTime == -1 && currentProcess->data->remainingTime > 0)
+            {
+                currentProcess->data->startTime = getClk();
+                currentProcess->data->pid = forkPrcs(currentProcess->data->runTime);
+                // write started
+            }
+            else //process has run before
+            {
+                kill(currentProcess->data->pid, SIGCONT);
+                // write resumed
+            }
+         }
     }
     alarm(quantum);
 }
