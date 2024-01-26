@@ -12,9 +12,9 @@ void initializePCB(process p, int pid);
 
 struct readyQueue* readyQ;
 
-struct PCB pcbArray[NPROC];
+struct PCB pcbArray[NPROC+1];
 
-struct PCB pcbDoneArray[NPROC];
+struct PCB pcbDoneArray[NPROC+1];
 
 int runningProcess;
 
@@ -133,7 +133,9 @@ void initializePCB(process p, int pid) {
     pcb.waitingTime = 0;
     pcb.turnaroundTime = 0;
 
-    pcbArray[p.id-1] = pcb;
+    //pcbArray[p.id-1] = pcb;
+    pcbArray[p.id] = pcb;
+
     enqueue(readyQ, p.id);
 }
 void runRoundRobin()
