@@ -82,10 +82,11 @@ int main(int argc, char * argv[])
             }
 
             initializePCB(p, prcsPid);
-
+            
             // put in pcb and enqueue
         }
-        //printf("\n\t %d \t %d \t %d \t %d", pcbArray[runningProcess-1].id, pcbArray[runningProcess-1].arrivalTime, pcbArray[runningProcess-1].runTime, pcbArray[runningProcess-1].priority);
+        printf("\n%d: \t %d \t %d \t %d \t %d\n", runningProcess, pcbArray[runningProcess-1].id, pcbArray[runningProcess-1].arrivalTime, pcbArray[runningProcess-1].runTime, pcbArray[runningProcess-1].priority);
+        //printf("\n---%d---\n",runningProcess);
         runRoundRobin();
     }
 
@@ -133,43 +134,48 @@ void initializePCB(process p, int pid) {
 }
 void runRoundRobin()
 {
-    printf("inrr\n");
     if(runningProcess == 0) //if no process running
     {
 
-        printf("incond1\n");
         if(!isEmpty(readyQ)){
             runningProcess = dequeue(readyQ);
-            printf("incond2 %d\n", runningProcess);
+            //printf("\nrunning update 1: %d\n", runningProcess);
             if(pcbArray[runningProcess-1].startTime==-1) // process running for the first time
             {
                 pcbArray[runningProcess-1].startTime = getClk();
-                kill(pcbArray[runningProcess-1].pid, SIGCONT);
+                kill(pcbArray[runningProcess-1].pid, SIGUSR1);
+                pcbArray[runningProcess-1].runTime--;
                 quantum_parts = 1;
             }
             else
             {
                 quantum_parts = 1;
-                kill(pcbArray[runningProcess-1].pid, SIGCONT);
+                kill(pcbArray[runningProcess-1].pid, SIGUSR1);
+                                pcbArray[runningProcess-1].runTime--;
+
             }
         }
     }
     else //there is a running process
     {
-        printf("incond3\n");
         if(quantum_parts < quantum){
-            kill(pcbArray[runningProcess-1].pid, SIGCONT);
+            kill(pcbArray[runningProcess-1].pid, SIGUSR1);
+                            pcbArray[runningProcess-1].runTime--;
+
             quantum_parts++;
         }
-        else if(quantum_parts >= quantum){
+        else if(quantum_parts == quantum){
             quantum_parts = 0;
             int temp = runningProcess;
             //dequeue
             runningProcess = dequeue(readyQ);
+            //printf("\nrunning update 1: %d\n", runningProcess);
             //enqueue
             enqueue(readyQ, temp);
             //run
-            kill(pcbArray[runningProcess-1].pid, SIGCONT);
+            kill(pcbArray[runningProcess-1].pid, SIGUSR1);
+                            pcbArray[runningProcess-1].runTime--;
+
         }
     }
 }
