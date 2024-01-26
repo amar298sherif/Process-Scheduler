@@ -16,7 +16,7 @@ int main(int argc, char *argv[])
     // TODO Initialization
     // 1. Read the input files.
     process procList[NPROC]; // 100 is maximum number of processes since we cannot make variable arrays.
-    readInputFile(procList, NPROC, "processes.txt");
+    readInputFile(procList, NPROC, "processes1.txt");
 
     // 2. Ask the user for the chosen scheduling algorithm and its parameters, if there are any.
     algorithm userAlgChoice = algChoice();
@@ -100,6 +100,8 @@ void inits(algorithm alg)
     }
     else
     {
+        // int das;
+        // scanf("%d",&das );
         int pid1 = fork();
         if (pid1 == 0)
         {

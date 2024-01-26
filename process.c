@@ -15,6 +15,7 @@ int main(int agrc, char * argv[])
     while (remainingtime > 0)
     {
         remainingTime--;
+        printf(remainingTime);
         pause();
     }
     
