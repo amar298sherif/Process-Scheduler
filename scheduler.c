@@ -12,7 +12,7 @@ void initializePCB(process p, int pid);
 
 struct readyQueue* readyQ;
 
-struct PCB pcbArray[NPROC+1];
+struct PCB pcbArray[NPROC+10];
 
 //struct PCB pcbDoneArray[NPROC+1];
 
@@ -25,7 +25,7 @@ void sigusr2_handler(int signum) {
     //pcbDoneArray[runningProcess] = pcbArray[runningProcess];
     quantum_steps = 0;
     runningProcess = 0;
-    runRoundRobin();
+    //runRoundRobin();
 }
 void sigusr1_handler(int signum) {
     printf("Received SIGUSR1 signal. A new process started\n");
