@@ -14,7 +14,7 @@ struct readyQueue* readyQ;
 
 struct PCB pcbArray[NPROC+1];
 
-struct PCB pcbDoneArray[NPROC+1];
+//struct PCB pcbDoneArray[NPROC+1];
 
 int runningProcess;
 
@@ -22,7 +22,7 @@ int quantum_steps;
 
 void sigusr2_handler(int signum) {
     printf("Received SIGUSR2 signal. Process %d finished\n", runningProcess);
-    pcbDoneArray[runningProcess] = pcbArray[runningProcess];
+    //pcbDoneArray[runningProcess] = pcbArray[runningProcess];
     quantum_steps = 0;
     runningProcess = 0;
     runRoundRobin();
@@ -58,7 +58,7 @@ int main(int argc, char * argv[])
     {
         sleep(1);
         currentTime = getClk();
-
+        printf("%d", runningProcess);
         // check for arriving processes
         process p = getProcess(sch_qid);
         if (p.arrivalTime != -1)
