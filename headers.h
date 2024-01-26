@@ -100,82 +100,89 @@ typedef struct PCB {
 } PCB;
 
 
+// C program for array implementation of queue
+#include <limits.h>
+#include <stdio.h>
+#include <stdlib.h>
 
-// Node structure for the linked list
-struct Node {
-    int data;
-    struct Node* next;
-};
-
-// readyQueue structure
+// A structure to represent a queue
 struct readyQueue {
-    struct Node* front;
-    struct Node* rear;
+	int front, rear, size;
+	unsigned capacity;
+	int* array;
 };
 
-// Function to create a new node with given data
-struct Node* createNode(int data) {
-    struct Node* newNode = (struct Node*)malloc(sizeof(struct Node));
-    if (newNode == NULL) {
-        perror("Memory allocation error");
-        exit(EXIT_FAILURE);
-    }
-    newNode->data = data;
-    newNode->next = NULL;
-    return newNode;
+// function to create a queue
+// of given capacity.
+// It initializes size of queue as 0
+struct readyQueue* createQueue(unsigned capacity)
+{
+	struct readyQueue* queue = (struct readyQueue*)malloc(
+		sizeof(struct readyQueue));
+	queue->capacity = capacity;
+	queue->front = queue->size = 0;
+
+	// This is important, see the enqueue
+	queue->rear = capacity - 1;
+	queue->array = (int*)malloc(
+		queue->capacity * sizeof(int));
+	return queue;
 }
 
-// Function to initialize an empty queue
-struct readyQueue* createQueue() {
-    struct readyQueue* queue = (struct readyQueue*)malloc(sizeof(struct readyQueue));
-    if (queue == NULL) {
-        perror("Memory allocation error");
-        exit(EXIT_FAILURE);
-    }
-    queue->front = queue->rear = NULL;
-    return queue;
+// readyQueue is full when size becomes
+// equal to the capacity
+// readyQueue is full when size becomes
+// equal to the capacity minus 1
+int isFull(struct readyQueue* queue)
+{
+    return (queue->size == (queue->capacity - 1));
 }
 
-// Function to check if the queue is empty
-int isEmpty(struct readyQueue* queue) {
-    return (queue->front == NULL);
+// readyQueue is empty when size is 0
+int isEmpty(struct readyQueue* queue)
+{
+	return (queue->size == 0);
 }
 
-// Function to enqueue an element into the queue
-void enqueue(struct readyQueue* queue, int data) {
-    struct Node* newNode = createNode(data);
-    if (isEmpty(queue)) {
-        queue->front = queue->rear = newNode;
-    } else {
-        queue->rear->next = newNode;
-        queue->rear = newNode;
-    }
+// Function to add an item to the queue.
+// It changes rear and size
+void enqueue(struct readyQueue* queue, int item)
+{
+	if (isFull(queue))
+		return;
+	queue->rear = (queue->rear + 1)
+				% queue->capacity;
+	queue->array[queue->rear] = item;
+	queue->size = queue->size + 1;
+	printf("%d enqueued to queue\n", item);
 }
 
-// Function to dequeue an element from the queue
-int dequeue(struct readyQueue* queue) {
-    if (isEmpty(queue)) {
-        fprintf(stderr, "Error: readyQueue is empty\n");
-        exit(EXIT_FAILURE);
-    }
-
-    struct Node* temp = queue->front;
-    int data = temp->data;
-
-    if (queue->front == queue->rear) {
-        queue->front = queue->rear = NULL;
-    } else {
-        queue->front = queue->front->next;
-    }
-
-    free(temp);
-    return data;
+// Function to remove an item from queue.
+// It changes front and size
+int dequeue(struct readyQueue* queue)
+{
+	if (isEmpty(queue))
+		return INT_MIN;
+	int item = queue->array[queue->front];
+	queue->front = (queue->front + 1)
+				% queue->capacity;
+	queue->size = queue->size - 1;
+	return item;
 }
 
-// Function to free the memory allocated for the queue
-void freeQueue(struct readyQueue* queue) {
-    while (!isEmpty(queue)) {
-        dequeue(queue);
-    }
-    free(queue);
+// Function to get front of queue
+int front(struct readyQueue* queue)
+{
+	if (isEmpty(queue))
+		return INT_MIN;
+	return queue->array[queue->front];
 }
+
+// Function to get rear of queue
+int rear(struct readyQueue* queue)
+{
+	if (isEmpty(queue))
+		return INT_MIN;
+	return queue->array[queue->rear];
+}
+
