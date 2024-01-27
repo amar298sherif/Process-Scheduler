@@ -1,5 +1,5 @@
 #include "headers.h"
-
+#include <errno.h>
 #define quantum 2
 
 int initSchQueue();
@@ -12,7 +12,7 @@ void initializePCB(process p, int pid);
 
 struct readyQueue* readyQ;
 
-struct PCB pcbArray[NPROC+10];
+struct PCB pcbArray[NPROC];
 
 //struct PCB pcbDoneArray[NPROC+1];
 
@@ -22,13 +22,13 @@ int quantum_steps;
 
 void sigusr2_handler(int signum) {
     printf("Received SIGUSR2 signal. Process %d finished\n", runningProcess);
-    //pcbDoneArray[runningProcess] = pcbArray[runningProcess];
+    //pcbDoneArray[runningProcess-1] = pcbArray[runningProcess-1];
     quantum_steps = 0;
     runningProcess = 0;
     //runRoundRobin();
 }
 void sigusr1_handler(int signum) {
-    printf("Received SIGUSR1 signal. A new process started\n");
+    //printf("Received SIGUSR1 signal. A new process started\n");
 }
 int main(int argc, char * argv[])
 {
@@ -37,7 +37,7 @@ int main(int argc, char * argv[])
         return 1;
     }
     if (signal(SIGUSR1, sigusr1_handler) == SIG_ERR) {
-        perror("Error setting up SIGUSR2 handler");
+        perror("Error setting up SIGUSR1 handler");
         return 1;
     }
     int sch_qid;
@@ -56,9 +56,9 @@ int main(int argc, char * argv[])
 
     while (1)
     {
-        sleep(1);
+        //sleep(1);
         currentTime = getClk();
-        printf("%d", runningProcess);
+        //printf("%d", runningProcess);
         // check for arriving processes
         process p = getProcess(sch_qid);
         if (p.arrivalTime != -1)
@@ -86,7 +86,7 @@ int main(int argc, char * argv[])
                 perror("Error in execv'ing to clock");
                 exit(EXIT_FAILURE);
             }
-
+            //printf("\n at time %d", currentTime);
             initializePCB(p, prcsPid);
 
             // put in pcb and enqueue
@@ -111,14 +111,26 @@ int initSchQueue()
 process getProcess(int qid)
 {
     msgbuff msg;
-    msgrcv(qid, &msg, sizeof(msg.mprocess), 0, !IPC_NOWAIT);
+    while (1) {
+        int ret = msgrcv(qid, &msg, sizeof(msg.mprocess), 0, !IPC_NOWAIT);
+        if (ret == -1) {
+            if (errno == EINTR) {
+                continue; // Interrupted by a signal, try again
+            } else {
+                perror("Error in msgrcv");
+                exit(-2);
+            }
+        }
+        break; // Message received, exit the loop
+    }
     if (msg.mprocess.arrivalTime != -1)
-    { //add it to the array here (?)
-        //printf("\n%p \t %d \t %d \t %d \t %d", &msg, msg.mprocess.id, msg.mprocess.arrivalTime, msg.mprocess.runTime, msg.mprocess.priority);
+    { 
+        // printf("\n%p \t %d \t %d \t %d \t %d", &msg, msg.mprocess.id, msg.mprocess.arrivalTime, msg.mprocess.runTime, msg.mprocess.priority);
     }
     
     return msg.mprocess;
 }
+
 
 void initializePCB(process p, int pid) {
     PCB pcb;
@@ -133,10 +145,13 @@ void initializePCB(process p, int pid) {
     pcb.waitingTime = 0;
     pcb.turnaroundTime = 0;
 
+    //printf("\n id: %d \t arrival: %d \t runtime: %d \t pri: %d\t", p.id, p.arrivalTime, p.runTime, p.priority);
+
     //pcbArray[p.id-1] = pcb;
-    pcbArray[p.id] = pcb;
+    pcbArray[p.id - 1] = pcb;
 
     enqueue(readyQ, p.id);
+    //printf("added and enqueued\n");
 }
 void runRoundRobin()
 {
@@ -144,34 +159,39 @@ void runRoundRobin()
     {
         if(!isEmpty(readyQ)){
             runningProcess = dequeue(readyQ);
-            if(pcbArray[runningProcess].startTime==-1) // process running for the first time
+            if(pcbArray[runningProcess-1].startTime==-1) // process running for the first time
             {
-                pcbArray[runningProcess].startTime = getClk();
-                kill(pcbArray[runningProcess].pid, SIGCONT);
+                pcbArray[runningProcess-1].startTime = getClk();
+                kill(pcbArray[runningProcess-1].pid, SIGCONT);
                 quantum_steps = 1;
             }
             else
             {
                 quantum_steps = 1;
-                kill(pcbArray[runningProcess].pid, SIGCONT);
+                kill(pcbArray[runningProcess-1].pid, SIGCONT);
             }
         }
     }
     else //there is a running process
     {
         if(quantum_steps < quantum){
-            kill(pcbArray[runningProcess].pid, SIGCONT);
+            kill(pcbArray[runningProcess-1].pid, SIGCONT);
             quantum_steps++;
         }
         else if(quantum_steps == quantum){
             quantum_steps = 0;
             int temp = runningProcess;
             //dequeue
-            runningProcess = dequeue(readyQ);
+            if(!isEmpty(readyQ))
+                runningProcess = dequeue(readyQ);
+            else
+                runningProcess = 0;
             //enqueue
             enqueue(readyQ, temp);
             //run
-            kill(pcbArray[runningProcess].pid, SIGCONT);
+            //printf("\n----running is :%d\n",runningProcess);
+           if (runningProcess > 0)
+                kill(pcbArray[runningProcess-1].pid, SIGCONT);
         }
     }
 }

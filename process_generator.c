@@ -15,8 +15,8 @@ int main(int argc, char *argv[])
     signal(SIGINT, clearResources);
     // TODO Initialization
     // 1. Read the input files.
-    process procList[NPROC]; // 100 is maximum number of processes since we cannot make variable arrays.
-    readInputFile(procList, NPROC, "processes.txt");
+    process procList[NPROC+1]; // 100 is maximum number of processes since we cannot make variable arrays.
+    readInputFile(procList, NPROC, "processes1.txt");
 
     // 2. Ask the user for the chosen scheduling algorithm and its parameters, if there are any.
     algorithm userAlgChoice = algChoice();
@@ -26,19 +26,18 @@ int main(int argc, char *argv[])
 
     // 4. Use this function after creating the clock process to initialize clock
     initClk();
-
-
+    
 
     // To get time use this
     fflush(stdout);
     int i = 0;
     while (1)
     {
-        sleep(1);
+        //sleep(1);
         int x = getClk();
         
-        printf("current time is %d\n", x);
-        if (procList[i].arrivalTime <= x)
+        //printf("current time is %d\n", x);
+        if (procList[i].arrivalTime <= x && i < NPROC)
         {
             sendProcess(sch_qid, procList[i]);
             i++;
@@ -90,6 +89,7 @@ void inits(algorithm alg)
 
     char command[60];
     strcpy(command, "./scheduler.out ");
+    //strcpy(command, "gdb -ex run --args ./scheduler.out ");
     strcat(command, params);
 
     int pid2 = fork();
@@ -100,12 +100,12 @@ void inits(algorithm alg)
     }
     else
     {
-        int pid1 = fork();
-        if (pid1 == 0)
-        {
-            execlp("x-terminal-emulator", "x-terminal-emulator", "-e", command, (char *)NULL);
-            exit(EXIT_FAILURE); // Only reached if execlp fails
-        }
+        // int pid1 = fork();
+        // if (pid1 == 0)
+        // {
+        //     execlp("x-terminal-emulator", "x-terminal-emulator", "-e", command, (char *)NULL);
+        //     exit(EXIT_FAILURE); // Only reached if execlp fails
+        // }
     }
 }
 
