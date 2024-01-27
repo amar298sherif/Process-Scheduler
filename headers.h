@@ -99,6 +99,7 @@ typedef struct PCB {
     int remainingTime;
     int waitingTime;
     int turnaroundTime;
+    int recentStart;
 } PCB;
 
 

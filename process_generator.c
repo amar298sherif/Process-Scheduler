@@ -106,12 +106,12 @@ void inits(algorithm alg)
     }
     else
     {
-        int pid1 = fork();
-        if (pid1 == 0)
-        {
-            execlp("x-terminal-emulator", "x-terminal-emulator", "-e", command, (char *)NULL);
-            exit(EXIT_FAILURE); // Only reached if execlp fails
-        }
+        // int pid1 = fork();
+        // if (pid1 == 0)
+        // {
+        //     execlp("x-terminal-emulator", "x-terminal-emulator", "-e", command, (char *)NULL);
+        //     exit(EXIT_FAILURE); // Only reached if execlp fails
+        // }
     }
 }
 
