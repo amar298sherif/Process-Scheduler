@@ -50,7 +50,8 @@ int main(int argc, char * argv[])
 
     quantum_steps = 0;
 
-    int currentTime = 0;    
+    int currentTime = 0;  
+    int oldclk = 0;  
     //while loop to maks sure its synced with the proc gen. 
     fflush(stdout);
 
@@ -58,6 +59,12 @@ int main(int argc, char * argv[])
     {
         //sleep(1);
         currentTime = getClk();
+        while(currentTime == oldclk)
+        {
+            currentTime = getClk();
+        }
+        oldclk = currentTime;
+                //printf("current time is %d\n", oldclk);
         //printf("%d", runningProcess);
         // check for arriving processes
         process p = getProcess(sch_qid);
@@ -125,7 +132,7 @@ process getProcess(int qid)
     }
     if (msg.mprocess.arrivalTime != -1)
     { 
-        // printf("\n%p \t %d \t %d \t %d \t %d", &msg, msg.mprocess.id, msg.mprocess.arrivalTime, msg.mprocess.runTime, msg.mprocess.priority);
+        //printf("\n%p \t %d \t %d \t %d \t %d", &msg, msg.mprocess.id, msg.mprocess.arrivalTime, msg.mprocess.runTime, msg.mprocess.priority);
     }
     
     return msg.mprocess;

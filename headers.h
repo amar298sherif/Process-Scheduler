@@ -21,6 +21,8 @@ typedef short bool;
 
 #define NPROC 10 //Maximum number of processes
 
+#define CLKDURATION 1
+
 ///==============================
 //don't mess with this variable//
 int * shmaddr;                 //
@@ -45,7 +47,7 @@ void initClk()
     {
         //Make sure that the clock exists
         printf("Wait! The clock not initialized yet!\n");
-        sleep(1);
+        sleep(CLKDURATION);
         shmid = shmget(SHKEY, 4, 0444);
     }
     shmaddr = (int *) shmat(shmid, (void *)0, 0);
