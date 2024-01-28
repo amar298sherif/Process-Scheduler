@@ -8,11 +8,12 @@ process getProcess(int qid);
 
 void runRoundRobin();
 void runSRTF();
+void runSJF();
 
 void initializePCB(process p, int pid);
 
 struct readyQueue* readyQ;
-struct readyQueue* PriorityQueue;
+Node PriorityQueue;
 struct PCB pcbArray[NPROC];
 
 //struct PCB pcbDoneArray[NPROC+1];
@@ -29,7 +30,7 @@ void sigusr2_handler(int signum) {
     //runRoundRobin();
 }
 void sigusr1_handler(int signum) {
-    //printf("Received SIGUSR1 signal. A new process started\n");
+    printf("Received SIGUSR1 signal. A new process started\n");
 }
 int main(int argc, char * argv[])
 {
@@ -46,7 +47,7 @@ int main(int argc, char * argv[])
     initClk();
     
     readyQ = createQueue(NPROC+1);
-    if(algo == 2) PriorityQueue = createQueue(NPROC + 1);
+    PriorityQueue = newNode(-1,-1); 
     runningProcess = 0;
 
     quantum_steps = 0;
@@ -100,7 +101,8 @@ int main(int argc, char * argv[])
             // put in pcb and enqueue
         }
         //runRoundRobin();
-        runSRTF();
+        //runSRTF();
+        runSJF();
     }
     //freeQueue(readyQ);
     destroyClk(true);
@@ -161,6 +163,7 @@ void initializePCB(process p, int pid) {
     pcbArray[p.id - 1] = pcb;
 
     enqueue(readyQ, p.id);
+    push(pcb, pcb.remainingTime);
     //printf("added and enqueued\n");
 }
 void runRoundRobin()
@@ -237,6 +240,7 @@ void StopProcess()
 
 void runSRTF() {
     if (runningProcess != 0) {
+        //printf("Received SIGUSR2 signal. Process %d running\n", runningProcess);
         pcbArray[runningProcess - 1].remainingTime -= (getClk() - pcbArray[runningProcess - 1].recentStart);
 
         if (!isEmpty(readyQ) && pcbArray[readyQ->front - 1].remainingTime < pcbArray[runningProcess - 1].remainingTime) {
@@ -245,13 +249,16 @@ void runSRTF() {
             heapify(readyQ, pcbArray, 0);
         } else {
             pcbArray[runningProcess - 1].recentStart = getClk();
-            return;
+            //return;
         }
     } 
     else
     {
         if(!isEmpty(readyQ))
-            runningProcess = dequeue(readyQ);
+       {
+         heapify(readyQ, pcbArray, 0); // Heapify from parent 
+         runningProcess = dequeue(readyQ);
+       }
     }
 
     if(pcbArray[runningProcess-1].startTime==-1) // process running for the first time
@@ -265,3 +272,31 @@ void runSRTF() {
     
     pcbArray[runningProcess - 1].recentStart = getClk();
 }
+
+
+void runSJF() {
+    if (!(runningProcess == 0 && !isEmpty(readyQ)))
+        return; 
+    
+    int shortestIndex = -1;
+    int shortestRuntime = INT_MAX;
+
+    for (int i = 0; i < readyQ->size; i++) {
+        int currentID = readyQ->array[i];
+        if (pcbArray[currentID - 1].remainingTime < shortestRuntime) {
+            shortestRuntime = pcbArray[currentID - 1].remainingTime;
+            shortestIndex = i;
+        }
+    }
+
+    runningProcess = readyQ->array[shortestIndex];
+    if (pcbArray[runningProcess - 1].startTime == -1) {
+        pcbArray[runningProcess - 1].startTime = getClk();
+        kill(pcbArray[runningProcess - 1].pid, SIGCONT);
+    } else {
+        kill(pcbArray[runningProcess - 1].pid, SIGCONT);
+    }
+    
+    
+}
+
