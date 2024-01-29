@@ -48,7 +48,7 @@ void sigusr2_handler(int signum)
 {
     completed++;
     int t = getClk();
-    printf("Received SIGUSR2 signal. Process %d finished\n", runningProcess);
+    printf("Process %d finished\n", runningProcess);
     char data[80];
     int TA = pcbArray[runningProcess - 1].waitingTime + pcbArray[runningProcess - 1].runTime;
     double WTA = (float)TA / (float)pcbArray[runningProcess - 1].runTime ;
@@ -67,10 +67,10 @@ void sigusr2_handler(int signum)
         switch (alg)
         {
         case RR:
-            runRoundRobin();
+            //runRoundRobin();
             break;
         case SJF:
-            runSJF();
+            //runSJF();
             break;
         case SRTF:
             runSRTN();
@@ -83,7 +83,7 @@ void sigusr2_handler(int signum)
 }
 void sigusr1_handler(int signum)
 {
-    // printf("Received SIGUSR1 signal. A new process started\n");
+    printf("A new process started\n");
 }
 void sigIntHandler(int signum)
 {
@@ -287,7 +287,7 @@ void runRoundRobin()
             {
                 pcbArray[runningProcess - 1].startTime = time;
                 char data[80];
-                sprintf(data, "At time %d process %d started arr %d remain %d wait %d\n", time, runningProcess, pcbArray[runningProcess - 1].arrivalTime, pcbArray[runningProcess - 1].remainingTime, pcbArray[runningProcess - 1].waitingTime);
+                sprintf(data, "At time %d process %d started arr %d remain %d wait %d\n", time, runningProcess, pcbArray[runningProcess - 1].arrivalTime,( pcbArray[runningProcess - 1].remainingTime < 0) ? 0 :   pcbArray[runningProcess - 1].remainingTime, pcbArray[runningProcess - 1].waitingTime);
                 writeToLog(data);
                 kill(pcbArray[runningProcess - 1].pid, SIGCONT);
                 pcbArray[runningProcess - 1].remainingTime--;
@@ -299,7 +299,7 @@ void runRoundRobin()
                 kill(pcbArray[runningProcess - 1].pid, SIGCONT);
                 pcbArray[runningProcess - 1].remainingTime--;
                 char data[80];
-                sprintf(data, "At time %d process %d resumed arr %d remain %d wait %d\n", time, runningProcess, pcbArray[runningProcess - 1].arrivalTime, pcbArray[runningProcess - 1].remainingTime, pcbArray[runningProcess - 1].waitingTime);
+                sprintf(data, "At time %d process %d resumed arr %d remain %d wait %d\n", time, runningProcess, pcbArray[runningProcess - 1].arrivalTime,( pcbArray[runningProcess - 1].remainingTime < 0) ? 0 :   pcbArray[runningProcess - 1].remainingTime, pcbArray[runningProcess - 1].waitingTime);
                 writeToLog(data);
             }
         }
@@ -311,7 +311,7 @@ void runRoundRobin()
             kill(pcbArray[runningProcess - 1].pid, SIGCONT);
             pcbArray[runningProcess - 1].remainingTime--;
             // char data[80];
-            // sprintf(data, "At time %d process %d started arr %d remain %d wait %d\n", time, runningProcess, pcbArray[runningProcess - 1].arrivalTime, pcbArray[runningProcess - 1].remainingTime, pcbArray[runningProcess - 1].waitingTime);
+            // sprintf(data, "At time %d process %d started arr %d remain %d wait %d\n", time, runningProcess, pcbArray[runningProcess - 1].arrivalTime,( pcbArray[runningProcess - 1].remainingTime < 0) ? 0 :   pcbArray[runningProcess - 1].remainingTime, pcbArray[runningProcess - 1].waitingTime);
             // writeToLog(data);
             quantum_steps++;
         }
@@ -338,12 +338,12 @@ void runRoundRobin()
                 if (pcbArray[runningProcess - 1].startTime == -1) // process running for the first time
                 {
                     pcbArray[runningProcess - 1].startTime = time;
-                    sprintf(data, "At time %d process %d started arr %d remain %d wait %d\n", time, runningProcess, pcbArray[runningProcess - 1].arrivalTime, pcbArray[runningProcess - 1].remainingTime, pcbArray[runningProcess - 1].waitingTime);
+                    sprintf(data, "At time %d process %d started arr %d remain %d wait %d\n", time, runningProcess, pcbArray[runningProcess - 1].arrivalTime,( pcbArray[runningProcess - 1].remainingTime < 0) ? 0 :   pcbArray[runningProcess - 1].remainingTime, pcbArray[runningProcess - 1].waitingTime);
                     writeToLog(data);
                 }
                 else
                 {
-                    sprintf(data, "At time %d process %d resumed arr %d remain %d wait %d\n", time, runningProcess, pcbArray[runningProcess - 1].arrivalTime, pcbArray[runningProcess - 1].remainingTime, pcbArray[runningProcess - 1].waitingTime);
+                    sprintf(data, "At time %d process %d resumed arr %d remain %d wait %d\n", time, runningProcess, pcbArray[runningProcess - 1].arrivalTime,( pcbArray[runningProcess - 1].remainingTime < 0) ? 0 :   pcbArray[runningProcess - 1].remainingTime, pcbArray[runningProcess - 1].waitingTime);
                     writeToLog(data);
                 }
             }
@@ -369,19 +369,19 @@ void runSRTN()
             pop(&pq);
             if (pcbArray[runningProcess - 1].startTime == -1) // process running for the first time
             {
-                sprintf(data, "At time %d process %d started arr %d remain %d wait %d\n", time, runningProcess, pcbArray[runningProcess - 1].arrivalTime, pcbArray[runningProcess - 1].remainingTime, pcbArray[runningProcess - 1].waitingTime);
+                sprintf(data, "At time %d process %d started arr %d remain %d wait %d\n", time, runningProcess, pcbArray[runningProcess - 1].arrivalTime,( pcbArray[runningProcess - 1].remainingTime < 0) ? 0 :   pcbArray[runningProcess - 1].remainingTime, pcbArray[runningProcess - 1].waitingTime);
                 writeToLog(data);
                 strcpy(data,"");
                 pcbArray[runningProcess - 1].startTime = getClk();
             }
             else{
-                sprintf(data, "At time %d process %d resumed arr %d remain %d wait %d\n", time, runningProcess, pcbArray[runningProcess - 1].arrivalTime, pcbArray[runningProcess - 1].remainingTime, pcbArray[runningProcess - 1].waitingTime);
+                sprintf(data, "At time %d process %d resumed arr %d remain %d wait %d\n", time, runningProcess, pcbArray[runningProcess - 1].arrivalTime,( pcbArray[runningProcess - 1].remainingTime < 0) ? 0 :   pcbArray[runningProcess - 1].remainingTime, pcbArray[runningProcess - 1].waitingTime);
                 writeToLog(data);
                 strcpy(data,"");
             }
             //kill(pcbArray[runningProcess - 1].pid, SIGCONT);
             //pcbArray[runningProcess - 1].remainingTime--;
-            //sprintf(data, "At time %d process %d started arr %d remain %d wait %d\n", time, runningProcess, pcbArray[runningProcess - 1].arrivalTime, pcbArray[runningProcess - 1].remainingTime, pcbArray[runningProcess - 1].waitingTime);
+            //sprintf(data, "At time %d process %d started arr %d remain %d wait %d\n", time, runningProcess, pcbArray[runningProcess - 1].arrivalTime,( pcbArray[runningProcess - 1].remainingTime < 0) ? 0 :   pcbArray[runningProcess - 1].remainingTime, pcbArray[runningProcess - 1].waitingTime);
             //writeToLog(data);
             //strcpy(data,"");
         }
@@ -406,13 +406,13 @@ void runSRTN()
                 strcpy(data,"");
                 if (pcbArray[runningProcess - 1].startTime == -1) // process running for the first time
                 {
-                    sprintf(data, "At time %d process %d started arr %d remain %d wait %d\n", time, runningProcess, pcbArray[runningProcess - 1].arrivalTime, pcbArray[runningProcess - 1].remainingTime, pcbArray[runningProcess - 1].waitingTime);
+                    sprintf(data, "At time %d process %d started arr %d remain %d wait %d\n", time, runningProcess, pcbArray[runningProcess - 1].arrivalTime,( pcbArray[runningProcess - 1].remainingTime < 0) ? 0 :   pcbArray[runningProcess - 1].remainingTime, pcbArray[runningProcess - 1].waitingTime);
                     writeToLog(data);
                     strcpy(data,"");
                     pcbArray[runningProcess - 1].startTime = getClk();
                 }
                 else{
-                    sprintf(data, "At time %d process %d resumed arr %d remain %d wait %d\n", time, runningProcess, pcbArray[runningProcess - 1].arrivalTime, pcbArray[runningProcess - 1].remainingTime, pcbArray[runningProcess - 1].waitingTime);
+                    sprintf(data, "At time %d process %d resumed arr %d remain %d wait %d\n", time, runningProcess, pcbArray[runningProcess - 1].arrivalTime,( pcbArray[runningProcess - 1].remainingTime < 0) ? 0 :   pcbArray[runningProcess - 1].remainingTime, pcbArray[runningProcess - 1].waitingTime);
                     writeToLog(data);
                     strcpy(data,"");
                 }
@@ -440,12 +440,12 @@ void runSJF()
             if (pcbArray[runningProcess - 1].startTime == -1) // process running for the first time
             {
                 pcbArray[runningProcess - 1].startTime = getClk();
-                sprintf(data, "At time %d process %d started arr %d remain %d wait %d\n", time, runningProcess, pcbArray[runningProcess - 1].arrivalTime, pcbArray[runningProcess - 1].remainingTime, pcbArray[runningProcess - 1].waitingTime);
+                sprintf(data, "At time %d process %d started arr %d remain %d wait %d\n", time, runningProcess, pcbArray[runningProcess - 1].arrivalTime,( pcbArray[runningProcess - 1].remainingTime < 0) ? 0 :   pcbArray[runningProcess - 1].remainingTime, pcbArray[runningProcess - 1].waitingTime);
                 writeToLog(data);
                 strcpy(data,"");
             }
             else{
-                sprintf(data, "At time %d process %d resumed arr %d remain %d wait %d\n", time, runningProcess, pcbArray[runningProcess - 1].arrivalTime, pcbArray[runningProcess - 1].remainingTime, pcbArray[runningProcess - 1].waitingTime);
+                sprintf(data, "At time %d process %d resumed arr %d remain %d wait %d\n", time, runningProcess, pcbArray[runningProcess - 1].arrivalTime,( pcbArray[runningProcess - 1].remainingTime < 0) ? 0 :   pcbArray[runningProcess - 1].remainingTime, pcbArray[runningProcess - 1].waitingTime);
                 writeToLog(data);
                 strcpy(data,"");
             }

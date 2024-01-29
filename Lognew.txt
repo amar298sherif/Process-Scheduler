@@ -1,6 +1,0 @@
-At time 1 process 1 started arr 1 remain 10 wait 0
- 
-At time 4 process 1 resumed arr 1 remain 8 wait 1
- 
-
- 
