@@ -44,16 +44,20 @@ void logPerf();
 
 void sigusr2_handler(int signum)
 {
+    completed++;
+    int t = getClk();
     printf("Received SIGUSR2 signal. Process %d finished\n", runningProcess);
     char data[80];
-    int TA = -1;
-    double WTA = -1;
-    sprintf(data, "At time %d process %d finsihed arr %d remain %d wait %d TA %d WTA %f\n", getClk(), runningProcess, pcbArray[runningProcess - 1].arrivalTime, pcbArray[runningProcess - 1].remainingTime, pcbArray[runningProcess - 1].waitingTime, pcbArray[runningProcess - 1].turnaroundTime, pcbArray[runningProcess - 1].weightedturnaroundTime);
+    int TA = t - pcbArray[runningProcess - 1].startTime;
+    double WTA = TA/completed;
+    pcbArray[runningProcess - 1].turnaroundTime = TA;
+    pcbArray[runningProcess - 1].weightedturnaroundTime = WTA;
+
+    sprintf(data, "At time %d process %d finsihed arr %d remain %d wait %d TA %d WTA %.3f\n", getClk(), runningProcess, pcbArray[runningProcess - 1].arrivalTime, pcbArray[runningProcess - 1].remainingTime, pcbArray[runningProcess - 1].waitingTime, pcbArray[runningProcess - 1].turnaroundTime, pcbArray[runningProcess - 1].weightedturnaroundTime);
     writeToLog(data);
     // pcbDoneArray[runningProcess-1] = pcbArray[runningProcess-1];
     quantum_steps = 0;
     runningProcess = 0;
-    completed++;
     // runRoundRobin();
 }
 void sigusr1_handler(int signum)
@@ -400,7 +404,7 @@ FILE *writeToLog(char text[])
     static FILE *fptr = NULL;
     if (fptr == NULL)
     {
-        fptr = fopen("Lognew.txt", "w");
+        fptr = fopen("output.log", "w");
         fprintf(fptr, "%s \n", text);
     }
     else
@@ -426,15 +430,30 @@ void updateWaitingTime()
 void logPerf()
 {
     int t = getClk();
-    int util = (t - idleTime)/t;
-    int awta = 0;
-    int aw = 0;
-    int stdwta;
+    float util = (t - idleTime)/t;
+    float awta = 0;
+    float aw = 0;
+    float step1 = 0;
+    float stdwta;
     for (size_t i = 0; i < completed; i++)
     {
         aw = aw + pcbArray[i].waitingTime;
-        awta = awta 
+        awta = awta +  pcbArray[i].weightedturnaroundTime;
     }
+    for (size_t i = 0; i < completed; i++)
+    {
+        step1 = pcbArray[i].waitingTime - aw
+    }
+    stdwta = sqrt(double((step1 * step1)/(completed-1)));
+
+    FILE *fptr = NULL;
+    fptr = fopen("output.perf", "w");
+    fprintf(fptr, "CPU utilization = %d %% \n", util);   
+    fprintf(fptr, "Avg WTA = %d \n",awta );
+    fprintf(fptr, "Avg Waiting = %d \n", aw);   
+    fprintf(fptr, "Std WTA = %d \n", stdwta);
+    fclose(fptr);
+
 }
 
 // void logTS()
