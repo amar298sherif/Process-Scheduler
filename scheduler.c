@@ -32,13 +32,15 @@ Node *pq = NULL;
 
 int lastArrived;
 
+void updateWaitingTime();
+
 void sigusr2_handler(int signum)
 {
     printf("Received SIGUSR2 signal. Process %d finished\n", runningProcess);
     char data[80];
     int TA = -1;
-    int WTA
-    // sprintf(data, "At time %d process %d finsihed arr %d remain %d wait %d TA %d WTA %f\n", getClk(), runningProcess, pcbArray[runningProcess - 1].arrivalTime, pcbArray[runningProcess - 1].remainingTime, pcbArray[runningProcess - 1].waitingTime);
+    double WTA = -1;
+    sprintf(data, "At time %d process %d finsihed arr %d remain %d wait %d TA %d WTA %f\n", getClk(), runningProcess, pcbArray[runningProcess - 1].arrivalTime, pcbArray[runningProcess - 1].remainingTime, pcbArray[runningProcess - 1].waitingTime, pcbArray[runningProcess - 1].turnaroundTime, pcbArray[runningProcess - 1].weightedturnaroundTime);
     writeToLog(data);
     // pcbDoneArray[runningProcess-1] = pcbArray[runningProcess-1];
     quantum_steps = 0;
@@ -133,6 +135,7 @@ int main(int argc, char *argv[])
 
             // put in pcb and enqueue
         }
+        updateWaitingTime();
         // runSJF();
         // runSRTN();
         runRoundRobin();
@@ -191,11 +194,11 @@ void initializePCB(process p, int pid)
     pcb.startTime = -1;
     pcb.endTime = -1;
     pcb.remainingTime = p.runTime;
-    pcb.waitingTime = 0;
+    pcb.waitingTime = -1;
     pcb.turnaroundTime = 0;
 
-    // if (lastArrived < p.id)
-    //     lastArrived = p.id;
+    if (lastArrived < p.id)
+        lastArrived = p.id;
 
     // printf("\n id: %d \t arrival: %d \t runtime: %d \t pri: %d\t", p.id, p.arrivalTime, p.runTime, p.priority);
 
@@ -364,6 +367,18 @@ FILE* writeToLog(char text[])
         fprintf(fptr, "%s \n", text);
     }
     return fptr;
+}
+
+void updateWaitingTime()
+{
+    for (size_t i = 0; i < lastArrived; i++)
+    {
+        if (i != runningProcess - 1 && pcbArray[i].remainingTime > 0)
+        {
+            pcbArray[i].waitingTime++;
+        }
+    }
+    
 }
 
 // void logTS()

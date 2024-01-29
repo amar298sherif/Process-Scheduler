@@ -101,6 +101,8 @@ typedef struct PCB {
     int remainingTime;
     int waitingTime;
     int turnaroundTime;
+    double weightedturnaroundTime;
+
 } PCB;
 
 
