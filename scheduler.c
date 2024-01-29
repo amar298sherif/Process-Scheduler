@@ -203,7 +203,8 @@ void initializePCB(process p, int pid)
 }
 void runRoundRobin()
 {
-    if (runningProcess == 0) // if no process running
+    int time = getClk();
+    if(runningProcess == 0) //if no process running
     {
         if (!isEmpty(readyQ))
         {
@@ -285,11 +286,9 @@ void runSRTN()
             {
                 pcbArray[runningProcess - 1].startTime = getClk();
             }
-            kill(pcbArray[runningProcess - 1].pid, SIGCONT);
-            pcbArray[runningProcess - 1].remainingTime--;
-            printf("Process %d is running\n", runningProcess);
-            printf("Remaining Time is %d \n", pcbArray[runningProcess - 1].remainingTime);
-        }
+            kill(pcbArray[runningProcess-1].pid, SIGCONT);
+            pcbArray[runningProcess-1].remainingTime--;
+            printf("At time %d process %d started arr %d total %d remain %d wait \n",time,runningProcess,pcbArray[runningProcess-1].arrivalTime,pcbArray[runningProcess-1].runTime,pcbArray[runningProcess-1].remainingTime);        }
     }
     else // there is a running process
     {
@@ -308,21 +307,21 @@ void runSRTN()
                 {
                     pcbArray[runningProcess - 1].startTime = getClk();
                 }
+                printf("At time %d process %d stopped arr %d total %d remain %d wait \n",time,tempid,pcbArray[tempid-1].arrivalTime,pcbArray[tempid-1].runTime,pcbArray[tempid-1].remainingTime);
             }
         }
-        if (runningProcess != 0)
-        {
-            kill(pcbArray[runningProcess - 1].pid, SIGCONT);
-            pcbArray[runningProcess - 1].remainingTime--;
-            printf("Process %d is running \n", runningProcess);
-            printf("Remaining Time is %d \n", pcbArray[runningProcess - 1].remainingTime);
+        if(runningProcess!=0){
+            kill(pcbArray[runningProcess-1].pid, SIGCONT);
+            pcbArray[runningProcess-1].remainingTime--;
+            printf("At time %d process %d started arr %d total %d remain %d wait \n",time,runningProcess,pcbArray[runningProcess-1].arrivalTime,pcbArray[runningProcess-1].runTime,pcbArray[runningProcess-1].remainingTime);
         }
     }
 }
 
-void runSJF()
-{
-    if (runningProcess == 0) // if no process running
+
+void runSJF(){
+    int time = getClk();
+    if(runningProcess == 0) //if no process running
     {
         if (!isEmptyPrio(&pq))
         {
@@ -333,18 +332,16 @@ void runSJF()
             {
                 pcbArray[runningProcess - 1].startTime = getClk();
             }
-            kill(pcbArray[runningProcess - 1].pid, SIGCONT);
-            pcbArray[runningProcess - 1].remainingTime--;
-            printf("Process %d is running\n", runningProcess);
-            printf("Remaining Time is %d \n", pcbArray[runningProcess - 1].remainingTime);
+            kill(pcbArray[runningProcess-1].pid, SIGCONT);
+            pcbArray[runningProcess-1].remainingTime--;
+            printf("At time %d process %d started arr %d total %d remain %d wait \n",time,runningProcess,pcbArray[runningProcess-1].arrivalTime,pcbArray[runningProcess-1].runTime,pcbArray[runningProcess-1].remainingTime);
         }
     }
     else // there is a running process
     {
-        kill(pcbArray[runningProcess - 1].pid, SIGCONT);
-        pcbArray[runningProcess - 1].remainingTime--;
-        printf("Process %d is running \n", runningProcess);
-        printf("Remaining Time is %d \n", pcbArray[runningProcess - 1].remainingTime);
+            kill(pcbArray[runningProcess-1].pid, SIGCONT);
+            pcbArray[runningProcess-1].remainingTime--;
+        printf("At time %d process %d started arr %d total %d remain %d wait \n",time,runningProcess,pcbArray[runningProcess-1].arrivalTime,pcbArray[runningProcess-1].runTime,pcbArray[runningProcess-1].remainingTime);
     }
 }
 
