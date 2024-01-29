@@ -35,8 +35,10 @@ int lastArrived;
 void sigusr2_handler(int signum)
 {
     printf("Received SIGUSR2 signal. Process %d finished\n", runningProcess);
-        char data[80];
-    // sprintf(data, "At time %d process %d finsihed arr %d remain %d wait %d TA %d WTA %f\n", getClk(), runningProcess, pcbArray[runningProcess - 1].arrivalTime, pcbArray[runningProcess - 1].remainingTime, getClk() - pcbArray[runningProcess - 1].arrivalTime - (pcbArray[runningProcess - 1].runTime - pcbArray[runningProcess - 1].remainingTime));
+    char data[80];
+    int TA = -1;
+    int WTA
+    // sprintf(data, "At time %d process %d finsihed arr %d remain %d wait %d TA %d WTA %f\n", getClk(), runningProcess, pcbArray[runningProcess - 1].arrivalTime, pcbArray[runningProcess - 1].remainingTime, pcbArray[runningProcess - 1].waitingTime);
     writeToLog(data);
     // pcbDoneArray[runningProcess-1] = pcbArray[runningProcess-1];
     quantum_steps = 0;
@@ -218,7 +220,7 @@ void runRoundRobin()
                 //kill(pcbArray[runningProcess - 1].pid, SIGCONT);
                 //pcbArray[runningProcess - 1].remainingTime--;
                 char data[80];
-                sprintf(data, "At time %d process %d started arr %d remain %d wait %d\n", getClk(), runningProcess, pcbArray[runningProcess - 1].arrivalTime, pcbArray[runningProcess - 1].remainingTime, getClk() - pcbArray[runningProcess - 1].arrivalTime - (pcbArray[runningProcess - 1].runTime - pcbArray[runningProcess - 1].remainingTime));
+                sprintf(data, "At time %d process %d started arr %d remain %d wait %d\n", getClk(), runningProcess, pcbArray[runningProcess - 1].arrivalTime, pcbArray[runningProcess - 1].remainingTime, pcbArray[runningProcess - 1].waitingTime);
                 writeToLog(data);
                 quantum_steps = quantum - 1;
             }
@@ -228,7 +230,7 @@ void runRoundRobin()
                 kill(pcbArray[runningProcess - 1].pid, SIGCONT);
                 pcbArray[runningProcess - 1].remainingTime--;
                 char data[80];
-                sprintf(data, "At time %d process %d resumed arr %d remain %d wait %d\n", getClk(), runningProcess, pcbArray[runningProcess - 1].arrivalTime, pcbArray[runningProcess - 1].remainingTime, getClk() - pcbArray[runningProcess - 1].arrivalTime - (pcbArray[runningProcess - 1].runTime - pcbArray[runningProcess - 1].remainingTime));
+                sprintf(data, "At time %d process %d resumed arr %d remain %d wait %d\n", getClk(), runningProcess, pcbArray[runningProcess - 1].arrivalTime, pcbArray[runningProcess - 1].remainingTime, pcbArray[runningProcess - 1].waitingTime);
                 writeToLog(data);
             }
         }
@@ -240,7 +242,7 @@ void runRoundRobin()
             kill(pcbArray[runningProcess - 1].pid, SIGCONT);
             pcbArray[runningProcess - 1].remainingTime--;
             //char data[80];
-            //sprintf(data, "At time %d process %d started arr %d remain %d wait %d\n", getClk(), runningProcess, pcbArray[runningProcess - 1].arrivalTime, pcbArray[runningProcess - 1].remainingTime, getClk() - pcbArray[runningProcess - 1].arrivalTime - (pcbArray[runningProcess - 1].runTime - pcbArray[runningProcess - 1].remainingTime));
+            //sprintf(data, "At time %d process %d started arr %d remain %d wait %d\n", getClk(), runningProcess, pcbArray[runningProcess - 1].arrivalTime, pcbArray[runningProcess - 1].remainingTime, pcbArray[runningProcess - 1].waitingTime);
             //writeToLog(data);
             quantum_steps++;
         }
@@ -262,9 +264,9 @@ void runRoundRobin()
                 kill(pcbArray[runningProcess - 1].pid, SIGCONT);
                 pcbArray[runningProcess - 1].remainingTime--;
                 char data[80];
-                sprintf(data, "At time %d process %d stopped arr %d remain %d wait %d\n", getClk(), temp, pcbArray[temp - 1].arrivalTime, pcbArray[temp - 1].remainingTime, getClk() - pcbArray[temp - 1].arrivalTime - (pcbArray[temp - 1].runTime - pcbArray[temp - 1].remainingTime));
+                sprintf(data, "At time %d process %d stopped arr %d remain %d wait %d\n", getClk(), temp, pcbArray[temp - 1].arrivalTime, pcbArray[temp - 1].remainingTime, pcbArray[temp - 1].waitingTime);
                 writeToLog(data);
-                sprintf(data, "At time %d process %d resumed arr %d remain %d wait %d\n", getClk(), runningProcess, pcbArray[runningProcess - 1].arrivalTime, pcbArray[runningProcess - 1].remainingTime, getClk() - pcbArray[runningProcess - 1].arrivalTime - (pcbArray[runningProcess - 1].runTime - pcbArray[runningProcess - 1].remainingTime));
+                sprintf(data, "At time %d process %d resumed arr %d remain %d wait %d\n", getClk(), runningProcess, pcbArray[runningProcess - 1].arrivalTime, pcbArray[runningProcess - 1].remainingTime, pcbArray[runningProcess - 1].waitingTime);
                 writeToLog(data);
             }
         }
