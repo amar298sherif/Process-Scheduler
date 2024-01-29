@@ -336,6 +336,7 @@ void runRoundRobin()
 
 void runSRTN()
 {
+    char data[80];
     int time = getClk();
     if (runningProcess == 0) // if no process running
     {
@@ -346,11 +347,21 @@ void runSRTN()
             pop(&pq);
             if (pcbArray[runningProcess - 1].startTime == -1) // process running for the first time
             {
+                sprintf(data, "At time %d process %d started arr %d remain %d wait %d\n", time, tempid, pcbArray[tempid - 1].arrivalTime, pcbArray[tempid - 1].remainingTime, pcbArray[tempid - 1].waitingTime);
+                writeToLog(data);
+                strcpy(data,'\0');
                 pcbArray[runningProcess - 1].startTime = getClk();
+            }
+            else{
+                sprintf(data, "At time %d process %d resumed arr %d remain %d wait %d\n", time, tempid, pcbArray[tempid - 1].arrivalTime, pcbArray[tempid - 1].remainingTime, pcbArray[tempid - 1].waitingTime);
+                writeToLog(data);
+                strcpy(data,'\0');
             }
             kill(pcbArray[runningProcess - 1].pid, SIGCONT);
             pcbArray[runningProcess - 1].remainingTime--;
-            printf("At time %d process %d started arr %d total %d remain %d wait \n", time, runningProcess, pcbArray[runningProcess - 1].arrivalTime, pcbArray[runningProcess - 1].runTime, pcbArray[runningProcess - 1].remainingTime);
+            sprintf(data, "At time %d process %d started arr %d remain %d wait %d\n", time, runningProcess, pcbArray[runningProcess - 1].arrivalTime, pcbArray[runningProcess - 1].remainingTime, pcbArray[runningProcess - 1].waitingTime);
+            writeToLog(data);
+            strcpy(data,'\0');
         }
     }
     else // there is a running process
@@ -366,24 +377,34 @@ void runSRTN()
                 runningProcess = id;
                 pop(&pq);
                 push(&pq, tempid, tempPrio);
+                sprintf(data, "At time %d process %d stopped arr %d remain %d wait %d\n", time, tempid, pcbArray[tempid - 1].arrivalTime, pcbArray[tempid - 1].remainingTime, pcbArray[tempid - 1].waitingTime);
+                writeToLog(data);
+                strcpy(data,'\0');
                 if (pcbArray[runningProcess - 1].startTime == -1) // process running for the first time
                 {
+                    sprintf(data, "At time %d process %d started arr %d remain %d wait %d\n", time, runningProcess, pcbArray[runningProcess - 1].arrivalTime, pcbArray[runningProcess - 1].remainingTime, pcbArray[runningProcess - 1].waitingTime);
+                    writeToLog(data);
+                    strcpy(data,'\0');
                     pcbArray[runningProcess - 1].startTime = getClk();
                 }
-                printf("At time %d process %d stopped arr %d total %d remain %d wait \n", time, tempid, pcbArray[tempid - 1].arrivalTime, pcbArray[tempid - 1].runTime, pcbArray[tempid - 1].remainingTime);
+                else{
+                    sprintf(data, "At time %d process %d resumed arr %d remain %d wait %d\n", time, runningProcess, pcbArray[runningProcess - 1].arrivalTime, pcbArray[runningProcess - 1].remainingTime, pcbArray[runningProcess - 1].waitingTime);
+                    writeToLog(data);
+                    strcpy(data,'\0');
+                }
             }
         }
         if (runningProcess != 0)
         {
             kill(pcbArray[runningProcess - 1].pid, SIGCONT);
             pcbArray[runningProcess - 1].remainingTime--;
-            printf("At time %d process %d started arr %d total %d remain %d wait \n", time, runningProcess, pcbArray[runningProcess - 1].arrivalTime, pcbArray[runningProcess - 1].runTime, pcbArray[runningProcess - 1].remainingTime);
         }
     }
 }
 
 void runSJF()
 {
+    char data[80];
     int time = getClk();
     if (runningProcess == 0) // if no process running
     {
@@ -395,17 +416,23 @@ void runSJF()
             if (pcbArray[runningProcess - 1].startTime == -1) // process running for the first time
             {
                 pcbArray[runningProcess - 1].startTime = getClk();
+                sprintf(data, "At time %d process %d started arr %d remain %d wait %d\n", time, runningProcess, pcbArray[runningProcess - 1].arrivalTime, pcbArray[runningProcess - 1].remainingTime, pcbArray[runningProcess - 1].waitingTime);
+                writeToLog(data);
+                strcpy(data,'\0');
+            }
+            else{
+                sprintf(data, "At time %d process %d resumed arr %d remain %d wait %d\n", time, runningProcess, pcbArray[runningProcess - 1].arrivalTime, pcbArray[runningProcess - 1].remainingTime, pcbArray[runningProcess - 1].waitingTime);
+                writeToLog(data);
+                strcpy(data,'\0');
             }
             kill(pcbArray[runningProcess - 1].pid, SIGCONT);
             pcbArray[runningProcess - 1].remainingTime--;
-            printf("At time %d process %d started arr %d total %d remain %d wait \n", time, runningProcess, pcbArray[runningProcess - 1].arrivalTime, pcbArray[runningProcess - 1].runTime, pcbArray[runningProcess - 1].remainingTime);
         }
     }
     else // there is a running process
     {
         kill(pcbArray[runningProcess - 1].pid, SIGCONT);
         pcbArray[runningProcess - 1].remainingTime--;
-        printf("At time %d process %d started arr %d total %d remain %d wait \n", time, runningProcess, pcbArray[runningProcess - 1].arrivalTime, pcbArray[runningProcess - 1].runTime, pcbArray[runningProcess - 1].remainingTime);
     }
 }
 
