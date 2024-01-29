@@ -1,0 +1,56 @@
+At time 1 process 1 started arr 1 remain 0 wait -1
+ 
+At time 3 process 1 stopped arr 1 remain -1 wait 0
+ 
+At time 3 process 2 resumed arr 3 remain 21 wait -1
+ 
+At time 6 process 2 stopped arr 3 remain 19 wait 0
+ 
+At time 6 process 1 resumed arr 1 remain -2 wait 2
+ 
+At time 7 process 3 started arr 5 remain 2 wait 1
+ 
+At time 9 process 3 stopped arr 5 remain 1 wait 2
+ 
+At time 9 process 2 resumed arr 3 remain 18 wait 2
+ 
+At time 12 process 2 stopped arr 3 remain 16 wait 3
+ 
+At time 12 process 4 resumed arr 8 remain 11 wait 3
+ 
+At time 15 process 4 stopped arr 8 remain 9 wait 4
+ 
+At time 15 process 5 resumed arr 9 remain 3 wait 5
+ 
+At time 18 process 5 stopped arr 9 remain 1 wait 6
+ 
+At time 18 process 3 resumed arr 5 remain 0 wait 10
+ 
+At time 20 process 2 started arr 3 remain 15 wait 10
+ 
+At time 22 process 2 stopped arr 3 remain 14 wait 11
+ 
+At time 22 process 6 resumed arr 15 remain 12 wait 6
+ 
+At time 25 process 6 stopped arr 15 remain 10 wait 7
+ 
+At time 25 process 4 resumed arr 8 remain 8 wait 13
+ 
+At time 28 process 4 stopped arr 8 remain 6 wait 14
+ 
+At time 28 process 7 resumed arr 16 remain 0 wait 11
+ 
+At time 30 process 8 started arr 17 remain 3 wait 12
+ 
+At time 32 process 8 stopped arr 17 remain 2 wait 13
+ 
+At time 32 process 9 resumed arr 18 remain 6 wait 13
+ 
+At time 35 process 9 stopped arr 18 remain 4 wait 14
+ 
+At time 35 process 5 resumed arr 9 remain 0 wait 22
+ 
+At time 37 process 10 started arr 19 remain 3 wait 17
+ 
+
+ 
