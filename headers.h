@@ -188,3 +188,97 @@ int rear(struct readyQueue* queue)
 	return queue->array[queue->rear];
 }
 
+//** PQ Implementation**
+
+
+// Node
+typedef struct node {
+    int data;
+
+    // Lower values indicate higher priority
+    int priority;
+
+    struct node* next;
+
+} Node;
+
+// Function to Create A New Node
+Node* newNode(int d, int p)
+{
+    Node* temp = (Node*)malloc(sizeof(Node));
+    if (temp != NULL) {
+        temp->data = d;
+        temp->priority = p;
+        temp->next = NULL;
+    }
+    return temp;
+}
+
+// Return the value at head
+int peek(Node** head,int* prio)
+{
+    if (*head != NULL) {
+        *prio = (*head)->priority;
+        return (*head)->data;
+    } else {
+        printf("Queue is empty.\n");
+        // You can also return a special value or handle it differently based on your requirement.
+        exit(EXIT_FAILURE);
+    }
+}
+
+// Removes the element with the
+// highest priority from the list
+void pop(Node** head)
+{
+    if (*head != NULL) {
+        Node* temp = *head;
+        (*head) = (*head)->next;
+        free(temp);
+    } else {
+        printf("Queue is empty. Cannot pop.\n");
+        // You can also return a special value or handle it differently based on your requirement.
+        exit(EXIT_FAILURE);
+    }
+}
+
+// Function to push according to priority
+void push(Node** head, int d, int p)
+{
+    if (*head == NULL) {
+        // If the list is empty, create a new node and make it the head.
+        *head = newNode(d, p);
+    } else {
+        Node* start = (*head);
+
+        // Create new Node
+        Node* temp = newNode(d, p);
+
+        // Special Case: The head of list has lesser
+        // priority than new node. So insert new
+        // node before head node and change head node.
+        if ((*head)->priority > p) {
+            // Insert New Node before head
+            temp->next = *head;
+            (*head) = temp;
+        } else {
+            // Traverse the list and find a
+            // position to insert new node
+            while (start->next != NULL &&
+                   start->next->priority < p) {
+                start = start->next;
+            }
+
+            // Either at the ends of the list
+            // or at required position
+            temp->next = start->next;
+            start->next = temp;
+        }
+    }
+}
+
+// Function to check if the list is empty
+int isEmptyPrio(Node** head)
+{
+    return (*head) == NULL;
+}

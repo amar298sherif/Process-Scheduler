@@ -8,6 +8,10 @@ process getProcess(int qid);
 
 void runRoundRobin();
 
+void runSRTN();
+
+void runSJF();
+
 void initializePCB(process p, int pid);
 
 struct readyQueue* readyQ;
@@ -19,6 +23,9 @@ struct PCB pcbArray[NPROC];
 int runningProcess;
 
 int quantum_steps;
+
+Node* pq = NULL;
+
 
 void sigusr2_handler(int signum) {
     printf("Received SIGUSR2 signal. Process %d finished\n", runningProcess);
@@ -98,7 +105,9 @@ int main(int argc, char * argv[])
 
             // put in pcb and enqueue
         }
-        runRoundRobin();
+        //runSJF();
+        runSRTN();
+        //runRoundRobin();
     }
     //freeQueue(readyQ);
     destroyClk(true);
@@ -158,6 +167,7 @@ void initializePCB(process p, int pid) {
     pcbArray[p.id - 1] = pcb;
 
     enqueue(readyQ, p.id);
+    push(&pq,p.id,p.runTime);
     //printf("added and enqueued\n");
 }
 void runRoundRobin()
@@ -200,5 +210,80 @@ void runRoundRobin()
            if (runningProcess > 0)
                 kill(pcbArray[runningProcess-1].pid, SIGCONT);
         }
+    }
+    if(runningProcess!=0){
+        printf("Process %d is running \n",runningProcess);
+        printf("Remaining Time is %d \n",pcbArray[runningProcess-1].remainingTime);
+    }
+}
+
+
+void runSRTN(){
+    if(runningProcess == 0) //if no process running
+    {
+        if(!isEmptyPrio(&pq)){
+            int prio;
+            runningProcess = peek(&pq,&prio);
+            pop(&pq);
+            if(pcbArray[runningProcess-1].startTime==-1) // process running for the first time
+            {
+                pcbArray[runningProcess-1].startTime = getClk();
+            }
+            kill(pcbArray[runningProcess-1].pid, SIGCONT);
+            pcbArray[runningProcess-1].remainingTime--;
+            printf("Process %d is running\n",runningProcess);
+            printf("Remaining Time is %d \n",pcbArray[runningProcess-1].remainingTime);
+        }
+    }
+    else //there is a running process
+    {
+        if(!isEmptyPrio(&pq)){
+            int prio;
+            int id = peek(&pq,&prio);
+            int tempid = runningProcess;
+            int tempPrio = pcbArray[runningProcess-1].remainingTime;
+            if(pcbArray[runningProcess-1].remainingTime>prio){
+                runningProcess = id;
+                pop(&pq);
+                push(&pq,tempid,tempPrio);
+                if(pcbArray[runningProcess-1].startTime==-1) // process running for the first time
+                {
+                    pcbArray[runningProcess-1].startTime = getClk();
+                }
+            }
+        }
+        if(runningProcess!=0){
+            kill(pcbArray[runningProcess-1].pid, SIGCONT);
+            pcbArray[runningProcess-1].remainingTime--;
+            printf("Process %d is running \n",runningProcess);
+            printf("Remaining Time is %d \n",pcbArray[runningProcess-1].remainingTime);
+        }
+    }
+}
+
+
+void runSJF(){
+    if(runningProcess == 0) //if no process running
+    {
+        if(!isEmptyPrio(&pq)){
+            int prio;
+            runningProcess = peek(&pq,&prio);
+            pop(&pq);
+            if(pcbArray[runningProcess-1].startTime==-1) // process running for the first time
+            {
+                pcbArray[runningProcess-1].startTime = getClk();
+            }
+            kill(pcbArray[runningProcess-1].pid, SIGCONT);
+            pcbArray[runningProcess-1].remainingTime--;
+            printf("Process %d is running\n",runningProcess);
+            printf("Remaining Time is %d \n",pcbArray[runningProcess-1].remainingTime);
+        }
+    }
+    else //there is a running process
+    {
+            kill(pcbArray[runningProcess-1].pid, SIGCONT);
+            pcbArray[runningProcess-1].remainingTime--;
+            printf("Process %d is running \n",runningProcess);
+            printf("Remaining Time is %d \n",pcbArray[runningProcess-1].remainingTime);
     }
 }
