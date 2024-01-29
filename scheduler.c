@@ -1,6 +1,6 @@
 #include "headers.h"
 #include <errno.h>
-#define quantum 2
+// #define quantum 2
 
 int initSchQueue();
 
@@ -14,7 +14,7 @@ void runSJF();
 
 void initializePCB(process p, int pid);
 
-FILE* writeToLog(char t[]);
+FILE *writeToLog(char t[]);
 
 void logTS();
 
@@ -28,11 +28,19 @@ int runningProcess;
 
 int quantum_steps;
 
+int quantum = 2;
+
+int completed = 0;
+
+int idleTime = 0;
+
 Node *pq = NULL;
 
 int lastArrived;
 
 void updateWaitingTime();
+
+void logPerf();
 
 void sigusr2_handler(int signum)
 {
@@ -45,20 +53,36 @@ void sigusr2_handler(int signum)
     // pcbDoneArray[runningProcess-1] = pcbArray[runningProcess-1];
     quantum_steps = 0;
     runningProcess = 0;
+    completed++;
     // runRoundRobin();
 }
 void sigusr1_handler(int signum)
 {
     // printf("Received SIGUSR1 signal. A new process started\n");
 }
-void sigIntHandler(int signum){
-    FILE* f = writeToLog("\n");
+void sigIntHandler(int signum)
+{
+    FILE *f = writeToLog("\n");
     fclose(f);
-        signal(SIGINT, SIG_DFL);
+    signal(SIGINT, SIG_DFL);
     kill(getpid(), SIGINT);
 }
 int main(int argc, char *argv[])
 {
+    algorithm alg = SJF;
+    if (argc > 1)
+    {
+        if (argv[1][1] == 'r')
+        {
+            quantum = atoi(argv[2]);
+            alg = RR;
+        }
+        else if (argv[1][1] == 'r')
+        {
+            alg = SRTF;
+        }
+    }
+
     if (signal(SIGUSR2, sigusr2_handler) == SIG_ERR)
     {
         perror("Error setting up SIGUSR2 handler");
@@ -136,9 +160,24 @@ int main(int argc, char *argv[])
             // put in pcb and enqueue
         }
         updateWaitingTime();
-        // runSJF();
-        // runSRTN();
-        runRoundRobin();
+        switch (alg)
+        {
+        case RR:
+            runRoundRobin();
+            break;
+        case SJF:
+            runSJF();
+            break;
+        case SRTF:
+            runSRTN();
+            break;
+        default:
+            raise(SIGINT);
+            break;
+        }
+
+        if (completed == NPROC)
+            raise(SIGINT);
     }
     // freeQueue(readyQ);
     destroyClk(true);
@@ -212,7 +251,7 @@ void initializePCB(process p, int pid)
 void runRoundRobin()
 {
     int time = getClk();
-    if(runningProcess == 0) //if no process running
+    if (runningProcess == 0) // if no process running
     {
         if (!isEmpty(readyQ))
         {
@@ -220,8 +259,8 @@ void runRoundRobin()
             if (pcbArray[runningProcess - 1].startTime == -1) // process running for the first time
             {
                 pcbArray[runningProcess - 1].startTime = getClk();
-                //kill(pcbArray[runningProcess - 1].pid, SIGCONT);
-                //pcbArray[runningProcess - 1].remainingTime--;
+                // kill(pcbArray[runningProcess - 1].pid, SIGCONT);
+                // pcbArray[runningProcess - 1].remainingTime--;
                 char data[80];
                 sprintf(data, "At time %d process %d started arr %d remain %d wait %d\n", getClk(), runningProcess, pcbArray[runningProcess - 1].arrivalTime, pcbArray[runningProcess - 1].remainingTime, pcbArray[runningProcess - 1].waitingTime);
                 writeToLog(data);
@@ -244,9 +283,9 @@ void runRoundRobin()
         {
             kill(pcbArray[runningProcess - 1].pid, SIGCONT);
             pcbArray[runningProcess - 1].remainingTime--;
-            //char data[80];
-            //sprintf(data, "At time %d process %d started arr %d remain %d wait %d\n", getClk(), runningProcess, pcbArray[runningProcess - 1].arrivalTime, pcbArray[runningProcess - 1].remainingTime, pcbArray[runningProcess - 1].waitingTime);
-            //writeToLog(data);
+            // char data[80];
+            // sprintf(data, "At time %d process %d started arr %d remain %d wait %d\n", getClk(), runningProcess, pcbArray[runningProcess - 1].arrivalTime, pcbArray[runningProcess - 1].remainingTime, pcbArray[runningProcess - 1].waitingTime);
+            // writeToLog(data);
             quantum_steps++;
         }
         else if (quantum_steps == quantum)
@@ -283,7 +322,7 @@ void runRoundRobin()
 
 void runSRTN()
 {
-    int time= getClk();
+    int time = getClk();
     if (runningProcess == 0) // if no process running
     {
         if (!isEmptyPrio(&pq))
@@ -295,9 +334,10 @@ void runSRTN()
             {
                 pcbArray[runningProcess - 1].startTime = getClk();
             }
-            kill(pcbArray[runningProcess-1].pid, SIGCONT);
-            pcbArray[runningProcess-1].remainingTime--;
-            printf("At time %d process %d started arr %d total %d remain %d wait \n",time,runningProcess,pcbArray[runningProcess-1].arrivalTime,pcbArray[runningProcess-1].runTime,pcbArray[runningProcess-1].remainingTime);        }
+            kill(pcbArray[runningProcess - 1].pid, SIGCONT);
+            pcbArray[runningProcess - 1].remainingTime--;
+            printf("At time %d process %d started arr %d total %d remain %d wait \n", time, runningProcess, pcbArray[runningProcess - 1].arrivalTime, pcbArray[runningProcess - 1].runTime, pcbArray[runningProcess - 1].remainingTime);
+        }
     }
     else // there is a running process
     {
@@ -316,21 +356,22 @@ void runSRTN()
                 {
                     pcbArray[runningProcess - 1].startTime = getClk();
                 }
-                printf("At time %d process %d stopped arr %d total %d remain %d wait \n",time,tempid,pcbArray[tempid-1].arrivalTime,pcbArray[tempid-1].runTime,pcbArray[tempid-1].remainingTime);
+                printf("At time %d process %d stopped arr %d total %d remain %d wait \n", time, tempid, pcbArray[tempid - 1].arrivalTime, pcbArray[tempid - 1].runTime, pcbArray[tempid - 1].remainingTime);
             }
         }
-        if(runningProcess!=0){
-            kill(pcbArray[runningProcess-1].pid, SIGCONT);
-            pcbArray[runningProcess-1].remainingTime--;
-            printf("At time %d process %d started arr %d total %d remain %d wait \n",time,runningProcess,pcbArray[runningProcess-1].arrivalTime,pcbArray[runningProcess-1].runTime,pcbArray[runningProcess-1].remainingTime);
+        if (runningProcess != 0)
+        {
+            kill(pcbArray[runningProcess - 1].pid, SIGCONT);
+            pcbArray[runningProcess - 1].remainingTime--;
+            printf("At time %d process %d started arr %d total %d remain %d wait \n", time, runningProcess, pcbArray[runningProcess - 1].arrivalTime, pcbArray[runningProcess - 1].runTime, pcbArray[runningProcess - 1].remainingTime);
         }
     }
 }
 
-
-void runSJF(){
+void runSJF()
+{
     int time = getClk();
-    if(runningProcess == 0) //if no process running
+    if (runningProcess == 0) // if no process running
     {
         if (!isEmptyPrio(&pq))
         {
@@ -341,20 +382,20 @@ void runSJF(){
             {
                 pcbArray[runningProcess - 1].startTime = getClk();
             }
-            kill(pcbArray[runningProcess-1].pid, SIGCONT);
-            pcbArray[runningProcess-1].remainingTime--;
-            printf("At time %d process %d started arr %d total %d remain %d wait \n",time,runningProcess,pcbArray[runningProcess-1].arrivalTime,pcbArray[runningProcess-1].runTime,pcbArray[runningProcess-1].remainingTime);
+            kill(pcbArray[runningProcess - 1].pid, SIGCONT);
+            pcbArray[runningProcess - 1].remainingTime--;
+            printf("At time %d process %d started arr %d total %d remain %d wait \n", time, runningProcess, pcbArray[runningProcess - 1].arrivalTime, pcbArray[runningProcess - 1].runTime, pcbArray[runningProcess - 1].remainingTime);
         }
     }
     else // there is a running process
     {
-            kill(pcbArray[runningProcess-1].pid, SIGCONT);
-            pcbArray[runningProcess-1].remainingTime--;
-        printf("At time %d process %d started arr %d total %d remain %d wait \n",time,runningProcess,pcbArray[runningProcess-1].arrivalTime,pcbArray[runningProcess-1].runTime,pcbArray[runningProcess-1].remainingTime);
+        kill(pcbArray[runningProcess - 1].pid, SIGCONT);
+        pcbArray[runningProcess - 1].remainingTime--;
+        printf("At time %d process %d started arr %d total %d remain %d wait \n", time, runningProcess, pcbArray[runningProcess - 1].arrivalTime, pcbArray[runningProcess - 1].runTime, pcbArray[runningProcess - 1].remainingTime);
     }
 }
 
-FILE* writeToLog(char text[])
+FILE *writeToLog(char text[])
 {
     static FILE *fptr = NULL;
     if (fptr == NULL)
@@ -371,6 +412,8 @@ FILE* writeToLog(char text[])
 
 void updateWaitingTime()
 {
+    if (runningProcess == 0)
+        idleTime++;
     for (size_t i = 0; i < lastArrived; i++)
     {
         if (i != runningProcess - 1 && pcbArray[i].remainingTime > 0)
@@ -378,7 +421,20 @@ void updateWaitingTime()
             pcbArray[i].waitingTime++;
         }
     }
-    
+}
+
+void logPerf()
+{
+    int t = getClk();
+    int util = (t - idleTime)/t;
+    int awta = 0;
+    int aw = 0;
+    int stdwta;
+    for (size_t i = 0; i < completed; i++)
+    {
+        aw = aw + pcbArray[i].waitingTime;
+        awta = awta 
+    }
 }
 
 // void logTS()

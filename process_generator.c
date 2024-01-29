@@ -76,7 +76,8 @@ void clearResources(int signum)
 
 void inits(algorithm alg)
 {
-    char params[10] = "\0";
+    int val;
+    char params[20] = "\0";
     switch (alg)
     {
     case SJF:
@@ -86,7 +87,12 @@ void inits(algorithm alg)
         strcpy(params, "srtf");
         break;
     case RR:
-        strcpy(params, "rr");
+        strcpy(params, "rr ");
+        printf("\nenter time quantum:\n");
+        scanf("%d", &val);
+        char num[5];
+        sprintf(num, "%d", val);
+        strcat(params, num);
         break;
     default:
         exit(-1);
@@ -97,6 +103,7 @@ void inits(algorithm alg)
     strcpy(command, "./scheduler.out ");
     //strcpy(command, "gdb -ex run --args ./scheduler.out ");
     strcat(command, params);
+        printf("%s",command);
 
     int pid2 = fork();
     if (pid2 == 0)
