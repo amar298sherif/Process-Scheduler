@@ -35,6 +35,9 @@ int lastArrived;
 void sigusr2_handler(int signum)
 {
     printf("Received SIGUSR2 signal. Process %d finished\n", runningProcess);
+        char data[80];
+    // sprintf(data, "At time %d process %d finsihed arr %d remain %d wait %d TA %d WTA %f\n", getClk(), runningProcess, pcbArray[runningProcess - 1].arrivalTime, pcbArray[runningProcess - 1].remainingTime, getClk() - pcbArray[runningProcess - 1].arrivalTime - (pcbArray[runningProcess - 1].runTime - pcbArray[runningProcess - 1].remainingTime));
+    writeToLog(data);
     // pcbDoneArray[runningProcess-1] = pcbArray[runningProcess-1];
     quantum_steps = 0;
     runningProcess = 0;
@@ -212,8 +215,8 @@ void runRoundRobin()
             if (pcbArray[runningProcess - 1].startTime == -1) // process running for the first time
             {
                 pcbArray[runningProcess - 1].startTime = getClk();
-                kill(pcbArray[runningProcess - 1].pid, SIGCONT);
-                pcbArray[runningProcess - 1].remainingTime--;
+                //kill(pcbArray[runningProcess - 1].pid, SIGCONT);
+                //pcbArray[runningProcess - 1].remainingTime--;
                 char data[80];
                 sprintf(data, "At time %d process %d started arr %d remain %d wait %d\n", getClk(), runningProcess, pcbArray[runningProcess - 1].arrivalTime, pcbArray[runningProcess - 1].remainingTime, getClk() - pcbArray[runningProcess - 1].arrivalTime - (pcbArray[runningProcess - 1].runTime - pcbArray[runningProcess - 1].remainingTime));
                 writeToLog(data);
@@ -275,6 +278,7 @@ void runRoundRobin()
 
 void runSRTN()
 {
+    int time= getClk();
     if (runningProcess == 0) // if no process running
     {
         if (!isEmptyPrio(&pq))
