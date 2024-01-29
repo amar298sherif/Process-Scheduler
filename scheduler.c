@@ -48,12 +48,12 @@ void sigusr2_handler(int signum)
     int t = getClk();
     printf("Received SIGUSR2 signal. Process %d finished\n", runningProcess);
     char data[80];
-    int TA = t - pcbArray[runningProcess - 1].startTime;
-    double WTA = TA/completed;
+    int TA = pcbArray[runningProcess - 1].waitingTime + pcbArray[runningProcess - 1].runTime;
+    double WTA = TA / completed;
     pcbArray[runningProcess - 1].turnaroundTime = TA;
     pcbArray[runningProcess - 1].weightedturnaroundTime = WTA;
 
-    sprintf(data, "At time %d process %d finsihed arr %d remain %d wait %d TA %d WTA %.3f\n", getClk(), runningProcess, pcbArray[runningProcess - 1].arrivalTime, pcbArray[runningProcess - 1].remainingTime, pcbArray[runningProcess - 1].waitingTime, pcbArray[runningProcess - 1].turnaroundTime, pcbArray[runningProcess - 1].weightedturnaroundTime);
+    sprintf(data, "At time %d process %d finsihed arr %d remain %d wait %d TA %d WTA %.3f\n", t, runningProcess, pcbArray[runningProcess - 1].arrivalTime, pcbArray[runningProcess - 1].remainingTime, pcbArray[runningProcess - 1].waitingTime, pcbArray[runningProcess - 1].turnaroundTime, pcbArray[runningProcess - 1].weightedturnaroundTime);
     writeToLog(data);
     // pcbDoneArray[runningProcess-1] = pcbArray[runningProcess-1];
     quantum_steps = 0;
@@ -68,6 +68,7 @@ void sigIntHandler(int signum)
 {
     FILE *f = writeToLog("\n");
     fclose(f);
+    logPerf();
     signal(SIGINT, SIG_DFL);
     kill(getpid(), SIGINT);
 }
@@ -262,11 +263,11 @@ void runRoundRobin()
             runningProcess = dequeue(readyQ);
             if (pcbArray[runningProcess - 1].startTime == -1) // process running for the first time
             {
-                pcbArray[runningProcess - 1].startTime = getClk();
+                pcbArray[runningProcess - 1].startTime = time;
                 // kill(pcbArray[runningProcess - 1].pid, SIGCONT);
                 // pcbArray[runningProcess - 1].remainingTime--;
                 char data[80];
-                sprintf(data, "At time %d process %d started arr %d remain %d wait %d\n", getClk(), runningProcess, pcbArray[runningProcess - 1].arrivalTime, pcbArray[runningProcess - 1].remainingTime, pcbArray[runningProcess - 1].waitingTime);
+                sprintf(data, "At time %d process %d started arr %d remain %d wait %d\n", time, runningProcess, pcbArray[runningProcess - 1].arrivalTime, pcbArray[runningProcess - 1].remainingTime, pcbArray[runningProcess - 1].waitingTime);
                 writeToLog(data);
                 quantum_steps = quantum - 1;
             }
@@ -276,7 +277,7 @@ void runRoundRobin()
                 kill(pcbArray[runningProcess - 1].pid, SIGCONT);
                 pcbArray[runningProcess - 1].remainingTime--;
                 char data[80];
-                sprintf(data, "At time %d process %d resumed arr %d remain %d wait %d\n", getClk(), runningProcess, pcbArray[runningProcess - 1].arrivalTime, pcbArray[runningProcess - 1].remainingTime, pcbArray[runningProcess - 1].waitingTime);
+                sprintf(data, "At time %d process %d resumed arr %d remain %d wait %d\n", time, runningProcess, pcbArray[runningProcess - 1].arrivalTime, pcbArray[runningProcess - 1].remainingTime, pcbArray[runningProcess - 1].waitingTime);
                 writeToLog(data);
             }
         }
@@ -288,7 +289,7 @@ void runRoundRobin()
             kill(pcbArray[runningProcess - 1].pid, SIGCONT);
             pcbArray[runningProcess - 1].remainingTime--;
             // char data[80];
-            // sprintf(data, "At time %d process %d started arr %d remain %d wait %d\n", getClk(), runningProcess, pcbArray[runningProcess - 1].arrivalTime, pcbArray[runningProcess - 1].remainingTime, pcbArray[runningProcess - 1].waitingTime);
+            // sprintf(data, "At time %d process %d started arr %d remain %d wait %d\n", time, runningProcess, pcbArray[runningProcess - 1].arrivalTime, pcbArray[runningProcess - 1].remainingTime, pcbArray[runningProcess - 1].waitingTime);
             // writeToLog(data);
             quantum_steps++;
         }
@@ -310,10 +311,19 @@ void runRoundRobin()
                 kill(pcbArray[runningProcess - 1].pid, SIGCONT);
                 pcbArray[runningProcess - 1].remainingTime--;
                 char data[80];
-                sprintf(data, "At time %d process %d stopped arr %d remain %d wait %d\n", getClk(), temp, pcbArray[temp - 1].arrivalTime, pcbArray[temp - 1].remainingTime, pcbArray[temp - 1].waitingTime);
+                sprintf(data, "At time %d process %d stopped arr %d remain %d wait %d\n", time, temp, pcbArray[temp - 1].arrivalTime, pcbArray[temp - 1].remainingTime, pcbArray[temp - 1].waitingTime);
                 writeToLog(data);
-                sprintf(data, "At time %d process %d resumed arr %d remain %d wait %d\n", getClk(), runningProcess, pcbArray[runningProcess - 1].arrivalTime, pcbArray[runningProcess - 1].remainingTime, pcbArray[runningProcess - 1].waitingTime);
-                writeToLog(data);
+                if (pcbArray[runningProcess - 1].startTime == -1) // process running for the first time
+                {
+                    pcbArray[runningProcess - 1].startTime = time;
+                    sprintf(data, "At time %d process %d started arr %d remain %d wait %d\n", time, runningProcess, pcbArray[runningProcess - 1].arrivalTime, pcbArray[runningProcess - 1].remainingTime, pcbArray[runningProcess - 1].waitingTime);
+                    writeToLog(data);
+                }
+                else
+                {
+                    sprintf(data, "At time %d process %d resumed arr %d remain %d wait %d\n", time, runningProcess, pcbArray[runningProcess - 1].arrivalTime, pcbArray[runningProcess - 1].remainingTime, pcbArray[runningProcess - 1].waitingTime);
+                    writeToLog(data);
+                }
             }
         }
     }
@@ -430,7 +440,7 @@ void updateWaitingTime()
 void logPerf()
 {
     int t = getClk();
-    float util = (t - idleTime)/t;
+    float util = ((t - idleTime) / t) * 100;
     float awta = 0;
     float aw = 0;
     float step1 = 0;
@@ -438,22 +448,23 @@ void logPerf()
     for (size_t i = 0; i < completed; i++)
     {
         aw = aw + pcbArray[i].waitingTime;
-        awta = awta +  pcbArray[i].weightedturnaroundTime;
+        awta = awta + pcbArray[i].weightedturnaroundTime;
     }
+    aw = aw/completed;
+    awta = awta/completed;
     for (size_t i = 0; i < completed; i++)
     {
-        step1 = pcbArray[i].waitingTime - aw
+        step1 = step1 + (pcbArray[i].waitingTime - aw) * (pcbArray[i].waitingTime - aw);
     }
-    stdwta = sqrt(double((step1 * step1)/(completed-1)));
+    stdwta = sqrt(((float)(step1)) / (completed - 1));
 
     FILE *fptr = NULL;
     fptr = fopen("output.perf", "w");
-    fprintf(fptr, "CPU utilization = %d %% \n", util);   
-    fprintf(fptr, "Avg WTA = %d \n",awta );
-    fprintf(fptr, "Avg Waiting = %d \n", aw);   
-    fprintf(fptr, "Std WTA = %d \n", stdwta);
+    fprintf(fptr, "CPU utilization = %.3f  \n", util);
+    fprintf(fptr, "Avg WTA = %.3f \n", awta);
+    fprintf(fptr, "Avg Waiting = %.3f \n", aw);
+    fprintf(fptr, "Std WTA = %.3f \n", stdwta);
     fclose(fptr);
-
 }
 
 // void logTS()

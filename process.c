@@ -21,8 +21,8 @@ int main(int agrc, char * argv[])
     while (remainingtime > 0)
     {
         remainingtime--;
-//        if (remainingtime == 0)
-//            break;
+       if (remainingtime == 0)
+           break;
 //
         raise(SIGSTOP);
     }
