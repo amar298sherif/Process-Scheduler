@@ -180,7 +180,8 @@ int main(int argc, char *argv[])
             raise(SIGINT);
             break;
         }
-
+        if (runningProcess == 0)
+            idleTime++;
         if (completed == NPROC)
             raise(SIGINT);
     }
@@ -426,8 +427,7 @@ FILE *writeToLog(char text[])
 
 void updateWaitingTime()
 {
-    if (runningProcess == 0)
-        idleTime++;
+
     for (size_t i = 0; i < lastArrived; i++)
     {
         if (i != runningProcess - 1 && pcbArray[i].remainingTime > 0)
@@ -460,7 +460,7 @@ void logPerf()
 
     FILE *fptr = NULL;
     fptr = fopen("output.perf", "w");
-    fprintf(fptr, "CPU utilization = %.3f  \n", util);
+    fprintf(fptr, "CPU utilization = %.3f %% \n", util);
     fprintf(fptr, "Avg WTA = %.3f \n", awta);
     fprintf(fptr, "Avg Waiting = %.3f \n", aw);
     fprintf(fptr, "Std WTA = %.3f \n", stdwta);
