@@ -22,7 +22,7 @@ typedef short bool;
 
 #define GEN_TO_SCH_KEY 1564
 
-#define NPROC 10 //Maximum number of processes
+#define NPROC 2 //Maximum number of processes
 
 #define CLKDURATION 1
 
