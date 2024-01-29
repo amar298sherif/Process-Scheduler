@@ -17,8 +17,7 @@
   </component>
   <component name="ChangeListManager">
     <list default="true" id="d2b0fd05-5dfb-4b8b-85dd-2972e994a51d" name="Changes" comment="">
-      <change beforePath="$PROJECT_DIR$/headers.h" beforeDir="false" afterPath="$PROJECT_DIR$/headers.h" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/process.c" beforeDir="false" afterPath="$PROJECT_DIR$/process.c" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/processes1.txt" beforeDir="false" afterPath="$PROJECT_DIR$/processes1.txt" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/scheduler" beforeDir="false" afterPath="$PROJECT_DIR$/scheduler" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/scheduler.c" beforeDir="false" afterPath="$PROJECT_DIR$/scheduler.c" afterDir="false" />
@@ -177,7 +176,7 @@
       <workItem from="1706474883194" duration="136000" />
       <workItem from="1706476213134" duration="455000" />
       <workItem from="1706501743101" duration="3875000" />
-      <workItem from="1706507874904" duration="7169000" />
+      <workItem from="1706507874904" duration="9902000" />
     </task>
     <servers />
   </component>
